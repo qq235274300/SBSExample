@@ -18,12 +18,14 @@ DWORD __stdcall App::CreateWindowInDll(LPVOID lpParam)
 
 void App::DoFrame()
 {
-	/*wnd->Gfx().BeginFrame(0.07f, 0.0f, 0.12f);*/
-	//wnd->Gfx().EndFrame();
+	wnd->Gfx().BeginFrame(1.0f, 0.0f, 0.0f);
+	wnd->Gfx().EndFrame();
 }
 
 App::~App()
-{}
+{
+	reshade::log::message(reshade::log::level::error, "App Class DeConstruct!");
+}
 
 
 void App::SetDllInstance(HINSTANCE dllInstance)

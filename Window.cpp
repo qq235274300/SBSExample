@@ -123,7 +123,7 @@ Window::Window(int width, int height, const char *name, HINSTANCE _hInst)
 	ShowWindow(hWnd, SW_SHOWDEFAULT);
 	//UpdateWindow(hWnd);
 
-	//pGfx = std::make_unique<Graphics>(hWnd);
+	pGfx = std::make_unique<Graphics>(hWnd);
 }
 
 Window::~Window()
