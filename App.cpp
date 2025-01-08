@@ -18,7 +18,7 @@ DWORD __stdcall App::CreateWindowInDll(LPVOID lpParam)
 
 void App::DoFrame()
 {
-	//wnd.Gfx().BeginFrame(0.07f, 0.0f, 0.12f);
+	/*wnd->Gfx().BeginFrame(0.07f, 0.0f, 0.12f);*/
 	//wnd->Gfx().EndFrame();
 }
 

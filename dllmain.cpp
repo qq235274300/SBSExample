@@ -234,9 +234,10 @@ static void on_destroy(reshade::api::effect_runtime *runtime)
 
 static void on_init_device(reshade::api::device *device)
 {
-	//App{}.Go();
-	//App::GetInstance();
-	//device->
+	/*if (app)
+	{
+		app->Go();
+	}*/
 }
 
 
@@ -245,13 +246,12 @@ DWORD WINAPI WindowThreadProc(LPVOID lpParam)
 	if (app)
 	{
 		app->CreateWindowInDll(lpParam);
-		
+		//app->Go();
 	}
 	else
 	{
 		reshade::log::message(reshade::log::level::info, "Failed to create window in WindowThreadProc");
 	}
-
 
 	return 0;
 }
@@ -282,12 +282,11 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 			reshade::log::message(reshade::log::level::error, s.str().c_str());
 			return FALSE;
 		}
-
+		reshade::log::message(reshade::log::level::info, "Succeed to register AAA Expander addon!");
 		app = new App();
 		app->SetDllInstance(hModule);
 		CreateThread(NULL, 0,WindowThreadProc, NULL, 0, NULL);
 
-		reshade::log::message(reshade::log::level::info, "Succeed to register AAA Expander addon!");
 		//Window(800, 600, "The Donkey Fart Box");
 		reshade::register_event<reshade::addon_event::init_device>(on_init_device);
 

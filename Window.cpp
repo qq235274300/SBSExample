@@ -121,6 +121,7 @@ Window::Window(int width, int height, const char *name, HINSTANCE _hInst)
 	}
 	reshade::log::message(reshade::log::level::error, "Create Chili Window Successed");
 	ShowWindow(hWnd, SW_SHOWDEFAULT);
+	//UpdateWindow(hWnd);
 
 	//pGfx = std::make_unique<Graphics>(hWnd);
 }
