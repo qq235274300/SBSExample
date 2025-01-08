@@ -66,7 +66,7 @@ Graphics::Graphics(HWND hwnd)
 	wrl::ComPtr<ID3D11DepthStencilState> pDSState;
 	pDevice->CreateDepthStencilState(&dsDesc, &pDSState);
 
-	// bind depth state
+	/*bind depth state  设置深度/模板 (Depth/Stencil) 状态到当前的输出合并器*/  
 	pContext->OMSetDepthStencilState(pDSState.Get(), 1u);
 
 	// create depth stensil texture
@@ -113,7 +113,57 @@ Graphics::~Graphics()
 	
 }
 
-#ifdef haha
+
+void Graphics::DrawTestTriangle()
+{
+	namespace wrl = Microsoft::WRL;
+	HRESULT hr;
+	struct Vertex
+	{
+		float x;
+		float y;
+	};
+	// create vertex buffer (1 2d triangle at center of screen)
+	const Vertex vertices[] =
+	{
+		{ 0.0f,0.5f },
+		{ 0.5f,-0.5f },
+		{ -0.5f,-0.5f },
+	};
+	wrl::ComPtr<ID3D11Buffer> pVertexBuffer;
+	D3D11_BUFFER_DESC bd = {};
+	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.CPUAccessFlags = 0u;
+	bd.MiscFlags = 0u;
+	bd.ByteWidth = sizeof(vertices);
+	bd.StructureByteStride = sizeof(Vertex);
+	D3D11_SUBRESOURCE_DATA sd = {};
+	sd.pSysMem = vertices;
+	pDevice->CreateBuffer(&bd, &sd, &pVertexBuffer);
+	// Bind vertex buffer to pipeline
+	const UINT stride = sizeof(Vertex);
+	const UINT offset = 0u;
+	pContext->IASetVertexBuffers(0u, 1u, &pVertexBuffer, &stride, &offset);
+
+	// create vertex shader
+	wrl::ComPtr<ID3D11VertexShader> pVertexShader;
+	wrl::ComPtr<ID3DBlob> pBlob;
+	D3DReadFileToBlob(L"VertexShader.cso", &pBlob);
+	pDevice->CreateVertexShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), nullptr, &pVertexShader);
+	// bind vertex shader
+	pContext->VSSetShader(pVertexShader.Get(), nullptr, 0u);
+
+	wrl::ComPtr<ID3D11PixelShader> pPixelShader;
+	D3DReadFileToBlob(L"PixelShader.cso", &pBlob);
+	pDevice->CreatePixelShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), nullptr, &pPixelShader);
+	// bind pixel shader
+	pContext->PSSetShader(pPixelShader.Get(), nullptr, 0u);
+
+	pContext->Draw((UINT)std::size(vertices), 0u);
+}
+
+
 void Graphics::DrawSomeShit(float angle, float x, float z)
 {
 	HRESULT hr;
@@ -160,7 +210,7 @@ void Graphics::DrawSomeShit(float angle, float x, float z)
 	D3D11_SUBRESOURCE_DATA sd = {};
 	sd.pSysMem = vertices;
 	
-	GFX_THROW_INFO(pDevice->CreateBuffer(&bd, &sd, &pVertextBuffer));
+	pDevice->CreateBuffer(&bd, &sd, &pVertextBuffer);
 
 	const UINT pStrides = sizeof(Vertex);
 	const UINT pOffsets = 0u;
@@ -188,7 +238,7 @@ void Graphics::DrawSomeShit(float angle, float x, float z)
 	D3D11_SUBRESOURCE_DATA isd = {};
 	isd.pSysMem = indices;
 
-	GFX_THROW_INFO(pDevice->CreateBuffer(&ibd, &isd, &pIndexBuffer));
+	pDevice->CreateBuffer(&ibd, &isd, &pIndexBuffer);
 
 	//bind Index Buffer
 	pContext->IASetIndexBuffer(pIndexBuffer.Get(),DXGI_FORMAT_R16_UINT,0u);
@@ -221,7 +271,7 @@ void Graphics::DrawSomeShit(float angle, float x, float z)
 	cbd.StructureByteStride = 0u;
 	D3D11_SUBRESOURCE_DATA csd = {};
 	csd.pSysMem = &cb;
-	GFX_THROW_INFO(pDevice->CreateBuffer(&cbd, &csd, &pConstantBuffer));
+	pDevice->CreateBuffer(&cbd, &csd, &pConstantBuffer);
 
 	// bind constant buffer to vertex shader
 	pContext->VSSetConstantBuffers(0u, 1u, pConstantBuffer.GetAddressOf());
@@ -260,7 +310,7 @@ void Graphics::DrawSomeShit(float angle, float x, float z)
 	ccbd.StructureByteStride = 0u;
 	D3D11_SUBRESOURCE_DATA ccsd = {};
 	ccsd.pSysMem = &ccb;
-	GFX_THROW_INFO(pDevice->CreateBuffer(&ccbd, &ccsd, &pConstantColorBuffer));
+	pDevice->CreateBuffer(&ccbd, &ccsd, &pConstantColorBuffer);
 
 	// bind constant buffer to pixel shader
 	pContext->PSSetConstantBuffers(0u, 1u, pConstantColorBuffer.GetAddressOf());
@@ -273,15 +323,15 @@ void Graphics::DrawSomeShit(float angle, float x, float z)
 
 	//Create & Bind Pixel Shader
 	wrl::ComPtr<ID3D11PixelShader> pPixelShader;
-	GFX_THROW_INFO(D3DReadFileToBlob(L"PixelShader.cso", &pBlob));
-	GFX_THROW_INFO(pDevice->CreatePixelShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), nullptr, &pPixelShader));
+	D3DReadFileToBlob(L"PixelShader.cso", &pBlob);
+	pDevice->CreatePixelShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), nullptr, &pPixelShader);
 	
 	pContext->PSSetShader(pPixelShader.Get(), nullptr, 0);
 
 	//Create Vertex Shader
 	wrl::ComPtr<ID3D11VertexShader> pVertexShader;
-	GFX_THROW_INFO(D3DReadFileToBlob(L"VertexShader.cso", &pBlob));
-	GFX_THROW_INFO(pDevice->CreateVertexShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), nullptr, &pVertexShader));
+	D3DReadFileToBlob(L"VertexShader.cso", &pBlob);
+	pDevice->CreateVertexShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), nullptr, &pVertexShader);
 	//BindVertexShader
 	pContext->VSSetShader(pVertexShader.Get(), nullptr, 0);
 	//Binary Blob Of Data
@@ -294,7 +344,7 @@ void Graphics::DrawSomeShit(float angle, float x, float z)
 		{"Position",0,DXGI_FORMAT_R32G32B32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0}
 		//{"Color",0,DXGI_FORMAT_R8G8B8A8_UNORM,0,12u,D3D11_INPUT_PER_VERTEX_DATA,0}
 	};
-	GFX_THROW_INFO(pDevice->CreateInputLayout(ied, (UINT)std::size(ied), pBlob->GetBufferPointer(), pBlob->GetBufferSize(), &pInputLayout));
+	pDevice->CreateInputLayout(ied, (UINT)std::size(ied), pBlob->GetBufferPointer(), pBlob->GetBufferSize(), &pInputLayout);
 
 	//Bind Input Layout
 	pContext->IASetInputLayout(pInputLayout.Get());
@@ -318,10 +368,10 @@ void Graphics::DrawSomeShit(float angle, float x, float z)
 	pContext->RSSetViewports(1u, &vp);
 
 	
-	GFX_THROW_INFO_ONLY(pContext->DrawIndexed((UINT)std::size(indices),0u, 0u));
+	pContext->DrawIndexed((UINT)std::size(indices),0u, 0u);
 }
 
-#endif
+
 
 
 void Graphics::DrawIndexed(UINT count) noexcept

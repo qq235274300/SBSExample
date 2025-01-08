@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Shader">
+      <UniqueIdentifier>{17cc3baa-e1bb-42ed-8ece-24ffb64c9977}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
@@ -45,6 +48,9 @@
     <ClInclude Include="Graphics.h">
       <Filter>源文件</Filter>
     </ClInclude>
+    <ClInclude Include="ChiliTimer.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameFrameExpander.cpp">
@@ -65,5 +71,16 @@
     <ClCompile Include="Graphics.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="ChiliTimer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="TextureVS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="PixelShader.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

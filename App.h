@@ -1,6 +1,6 @@
 #pragma once
 #include "Window.h"
-
+#include "ChiliTimer.h"
 class App
 {
 public:
@@ -18,7 +18,7 @@ public:
 private:
 	void DoFrame();
 private:
-	
+	 ChiliTimer timer;
 	Window* wnd;
 	HINSTANCE dll_Instance;
 	

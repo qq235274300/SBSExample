@@ -11,14 +11,17 @@ App::App()
 
 DWORD __stdcall App::CreateWindowInDll(LPVOID lpParam)
 {
-	wnd = new Window(800, 300, "Donkey Fart Box", dll_Instance);
+	wnd = new Window(800, 600, "Donkey Fart Box", dll_Instance);
 	Go();
 	return 0;
 }
 
 void App::DoFrame()
 {
-	wnd->Gfx().BeginFrame(1.0f, 0.0f, 0.0f);
+	const float c = sin(timer.Peek()) / 2.0f + 0.5f;
+
+	wnd->Gfx().BeginFrame(c, c, 1.0f);
+	wnd->Gfx().DrawTestTriangle();
 	wnd->Gfx().EndFrame();
 }
 
