@@ -11,6 +11,7 @@ using namespace reshade::api;
 
 extern bool save_texture_image(const resource_desc &desc, const subresource_data &data);
 
+App *app;
 
 struct __declspec(uuid("0d7525f9-c4e1-426e-bc99-15bbd5fd51f2")) frame_capture
 {
@@ -233,60 +234,85 @@ static void on_destroy(reshade::api::effect_runtime *runtime)
 
 static void on_init_device(reshade::api::device *device)
 {
-	App{}.Go();
+	//App{}.Go();
 	//App::GetInstance();
+	//device->
+}
+
+
+DWORD WINAPI WindowThreadProc(LPVOID lpParam)
+{
+	if (app)
+	{
+		app->CreateWindowInDll(lpParam);
+		
+	}
+	else
+	{
+		reshade::log::message(reshade::log::level::info, "Failed to create window in WindowThreadProc");
+	}
+
+
+	return 0;
 }
 
 
 extern "C" __declspec(dllexport) const char *NAME = "AAA Game Expander";
 extern "C" __declspec(dllexport) const char *DESCRIPTION = "AAA Expander Game Graphics to 3840.";
 
-static bool Dllinitialized = false;
+
 
 BOOL APIENTRY DllMain(HMODULE hModule,
                        DWORD  ul_reason_for_call,
                        LPVOID lpReserved
 )
 {
+	
+
     switch (ul_reason_for_call)
     {
     case DLL_PROCESS_ATTACH:
-
-		if (Dllinitialized)
+	{
+		
+		// 注册插件
+		if (!reshade::register_addon(hModule))
 		{
-			return TRUE;
+			std::stringstream s;
+			s << "Failed to register AAA Expander addon!";
+			reshade::log::message(reshade::log::level::error, s.str().c_str());
+			return FALSE;
 		}
-		Dllinitialized = true;
 
-        // 注册插件
-        if (!reshade::register_addon(hModule))
-        {
-            std::stringstream s;
-            s << "Failed to register AAA Expander addon!";
-            reshade::log::message(reshade::log::level::error, s.str().c_str());
-            return FALSE;
-        }
+		app = new App();
+		app->SetDllInstance(hModule);
+		CreateThread(NULL, 0,WindowThreadProc, NULL, 0, NULL);
+
 		reshade::log::message(reshade::log::level::info, "Succeed to register AAA Expander addon!");
 		//Window(800, 600, "The Donkey Fart Box");
 		reshade::register_event<reshade::addon_event::init_device>(on_init_device);
-		
+
 		//reshade::register_event<reshade::addon_event::init_effect_runtime>(on_init);
-        //reshade::register_event<reshade::addon_event::destroy_effect_runtime>(on_destroy);
-        // 注册 create_swapchain 事件回调
-        //reshade::register_event<reshade::addon_event::create_swapchain>(&on_create_swapchain);
-       // reshade::log::message(reshade::log::level::info, "Successed  register ReShade AAA Expander addon!");
+		//reshade::register_event<reshade::addon_event::destroy_effect_runtime>(on_destroy);
+		// 注册 create_swapchain 事件回调
+		//reshade::register_event<reshade::addon_event::create_swapchain>(&on_create_swapchain);
+	   // reshade::log::message(reshade::log::level::info, "Successed  register ReShade AAA Expander addon!");
 
-        //reshade::register_event<reshade::addon_event::set_fullscreen_state>(on_set_fullscreen_state);
-       // reshade::register_event<reshade::addon_event::present>(&on_present);
-       // reshade::register_event<reshade::addon_event::reshade_finish_effects>(on_reshade_finish_effects);
-        //reshade::register_event<reshade::addon_event::bind_render_targets_and_depth_stencil>(on_bind_render_targets_and_depth_stencil);
-       // reshade::register_event<reshade::addon_event::draw>(on_draw);
-        break;
+		//reshade::register_event<reshade::addon_event::set_fullscreen_state>(on_set_fullscreen_state);
+	   // reshade::register_event<reshade::addon_event::present>(&on_present);
+	   // reshade::register_event<reshade::addon_event::reshade_finish_effects>(on_reshade_finish_effects);
+		//reshade::register_event<reshade::addon_event::bind_render_targets_and_depth_stencil>(on_bind_render_targets_and_depth_stencil);
+	   // reshade::register_event<reshade::addon_event::draw>(on_draw);
+		break;
+	}
 
+	
     case DLL_PROCESS_DETACH:
-        // 注销插件
-        reshade::unregister_addon(hModule);
-        break;
+	{
+		// 注销插件
+		reshade::unregister_addon(hModule);
+		break;
+	}
+        
     }
 
     return TRUE;

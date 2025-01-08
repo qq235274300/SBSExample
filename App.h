@@ -9,17 +9,17 @@ public:
 	// master frame / message loop
 	int Go();
 	~App();
-
-
-	static App* GetInstance();
-	static App* appInstance;
 	
+	void SetDllInstance(HINSTANCE dllInstance);
+	HINSTANCE GetDllInstance();
+public:
+	 DWORD WINAPI CreateWindowInDll(LPVOID lpParam);
 
 private:
 	void DoFrame();
 private:
 	
-	Window wnd;
-	
+	Window* wnd;
+	HINSTANCE dll_Instance;
 	
 };

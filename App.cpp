@@ -1,30 +1,40 @@
 #include "App.h"
+#include "reshade.hpp"
 
-App *App::appInstance = nullptr;
+
+
+
 App::App()
-	:
-	wnd(3840, 1080, "The Donkey Fart Box")
 {
-	
+	reshade::log::message(reshade::log::level::error,  "App Class Construct!");
+}
+
+DWORD __stdcall App::CreateWindowInDll(LPVOID lpParam)
+{
+	wnd = new Window(800, 300, "Donkey Fart Box", dll_Instance);
+	Go();
+	return 0;
 }
 
 void App::DoFrame()
 {
 	//wnd.Gfx().BeginFrame(0.07f, 0.0f, 0.12f);
-	wnd.Gfx().EndFrame();
+	//wnd->Gfx().EndFrame();
 }
 
 App::~App()
 {}
 
-App* App::GetInstance()
+
+void App::SetDllInstance(HINSTANCE dllInstance)
 {
-	if (appInstance == nullptr)
-	{
-		appInstance = new App();
-		appInstance->Go();
-	}
-	return appInstance;
+	dll_Instance = dllInstance;
+}
+
+HINSTANCE App::GetDllInstance()
+{
+	
+	return dll_Instance;
 }
 
 

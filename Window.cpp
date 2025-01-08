@@ -2,13 +2,14 @@
 #include <sstream>
 #include "resource.h"
 #include "reshade.hpp"
+#include "App.h"
 
 // Window Class Stuff
-Window::WindowClass Window::WindowClass::wndClass;
+//Window::WindowClass Window::WindowClass::wndClass;
 
 Window::WindowClass::WindowClass() noexcept
-	:
-	hInst(GetModuleHandle(nullptr))
+	///*:
+	//hInst(GetInstance())*/
 {
 	WNDCLASSEX wc = { 0 };
 	wc.cbSize = sizeof(wc);
@@ -17,7 +18,7 @@ Window::WindowClass::WindowClass() noexcept
 	//wc.lpfnWndProc = DefWindowProc;
 	wc.cbClsExtra = 0;
 	wc.cbWndExtra = 0;
-	wc.hInstance = GetInstance();
+	//wc.hInstance = GetInstance();
 	wc.hIcon = nullptr;
 	/*wc.hIcon = static_cast<HICON>(LoadImage(
 		GetInstance(), MAKEINTRESOURCE(IDI_ICON2),
@@ -32,12 +33,17 @@ Window::WindowClass::WindowClass() noexcept
 		GetInstance(), MAKEINTRESOURCE(IDI_ICON2),
 		IMAGE_ICON, 16, 16, 0
 		));*/
-	RegisterClassEx(&wc);
+
+	if (!RegisterClassEx(&wc))
+	{
+		MessageBoxA(NULL, "Error register Window class", "Error", MB_OK);
+		
+	}
 }
 
 Window::WindowClass::~WindowClass()
 {
-	UnregisterClass(wndClassName, GetInstance());
+	//UnregisterClass(wndClassName, GetInstance());
 }
 
 const char *Window::WindowClass::GetName() noexcept
@@ -45,16 +51,50 @@ const char *Window::WindowClass::GetName() noexcept
 	return wndClassName;
 }
 
-HINSTANCE Window::WindowClass::GetInstance() noexcept
-{
-	return wndClass.hInst;
-}
+//HINSTANCE Window::WindowClass::GetInstance() noexcept
+//{
+//	//return wndClass.hInst;
+//}
+
+
+
 
 
 // Window Stuff
-Window::Window(int width, int height, const char *name)
-	:width(width), height(height)
+Window::Window(int width, int height, const char *name, HINSTANCE _hInst)
+	:width(width), height(height),hInst(_hInst)
 {
+
+
+	WNDCLASSEX wc = { 0 };
+	wc.cbSize = sizeof(wc);
+	wc.style = CS_OWNDC;
+	wc.lpfnWndProc = HandleMsgSetup;
+	//wc.lpfnWndProc = DefWindowProc;
+	wc.cbClsExtra = 0;
+	wc.cbWndExtra = 0;
+	wc.hInstance = hInst;
+	wc.hIcon = nullptr;
+	/*wc.hIcon = static_cast<HICON>(LoadImage(
+		GetInstance(), MAKEINTRESOURCE(IDI_ICON2),
+		IMAGE_ICON, 32, 32, 0
+		));*/
+	wc.hCursor = nullptr;
+	wc.hbrBackground = nullptr;
+	wc.lpszMenuName = nullptr;
+	wc.lpszClassName = "Chili Direct3D Engine Window";
+	wc.hIconSm = nullptr;
+	/*wc.hIconSm = static_cast<HICON>(LoadImage(
+		GetInstance(), MAKEINTRESOURCE(IDI_ICON2),
+		IMAGE_ICON, 16, 16, 0
+		));*/
+
+	if (!RegisterClassEx(&wc))
+	{
+		MessageBoxA(NULL, "Error register Window class", "Error", MB_OK);
+
+	};
+
 	// calculate window size based on desired client region size
 	RECT wr;
 	wr.left = 100;
@@ -68,10 +108,10 @@ Window::Window(int width, int height, const char *name)
 	};
 	// create window & get hWnd
 	hWnd = CreateWindow(
-		WindowClass::GetName(), name,
+		"Chili Direct3D Engine Window", name,
 		WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
 		CW_USEDEFAULT, CW_USEDEFAULT, wr.right - wr.left, wr.bottom - wr.top,
-		nullptr, nullptr, WindowClass::GetInstance(), this
+		nullptr, nullptr, hInst, this
 	);
 	// show window
 	if (hWnd == nullptr)
