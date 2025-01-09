@@ -35,8 +35,7 @@ private:
 public:
 	void BeginFrame(float red, float green, float blue)noexcept;
 	void EndFrame();
-	void DrawSomeShit(float angle, float x, float z);
-	void DrawTestTriangle();
+	void DrawTestTriangle(float angle, float x, float z);
 public:
 	void EnableImgui()noexcept;
 	void DisableImgui()noexcept;
