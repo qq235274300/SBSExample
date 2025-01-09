@@ -21,5 +21,7 @@ private:
 	 ChiliTimer timer;
 	Window* wnd;
 	HINSTANCE dll_Instance;
+private:
+	std::vector<std::unique_ptr<class Box>> boxes;
 	
 };

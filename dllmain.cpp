@@ -284,7 +284,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 		}
 		reshade::log::message(reshade::log::level::info, "Succeed to register AAA Expander addon!");
 		app = new App();
-		app->SetDllInstance(hModule);
+		app->SetDllInstance(hModule); 
 		CreateThread(NULL, 0,WindowThreadProc, NULL, 0, NULL);
 
 		//Window(800, 600, "The Donkey Fart Box");

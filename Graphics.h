@@ -14,8 +14,6 @@ class Graphics
 {
 	friend class Bindable;
 
-
-	
 public:
 	Graphics(HWND hwnd);
 	//复制构造函数
@@ -24,25 +22,25 @@ public:
 	Graphics& operator=(const Graphics&) = delete;
 	~Graphics();
 public:
-	void DrawIndexed(UINT count) noexcept;
-	void SetProjection(DirectX::FXMMATRIX proj) noexcept;
-	DirectX::XMMATRIX GetProjection() const noexcept;
+	
 	//相机矩阵
 	void SetCamera(DirectX::FXMMATRIX cam) noexcept;
 	DirectX::XMMATRIX GetCamera() const noexcept;
-private:
-	DirectX::XMMATRIX projection;
+
 public:
 	void BeginFrame(float red, float green, float blue)noexcept;
 	void EndFrame();
 	void DrawTestTriangle(float angle, float x, float z);
+	void DrawIndexed(UINT count) noexcept;
+	void SetProjection(DirectX::FXMMATRIX proj) noexcept;
+	DirectX::XMMATRIX GetProjection() const noexcept;
 public:
 	void EnableImgui()noexcept;
 	void DisableImgui()noexcept;
 	bool IsImguiEnabled()const noexcept;
 	
 private:
-
+	DirectX::XMMATRIX projection;
 
 private:
 	DirectX::XMMATRIX camera;

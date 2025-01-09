@@ -1,5 +1,12 @@
 #pragma once
-class Topology
-{
-};
+#include "Bindable.h"
 
+//…Ë÷√Õÿ∆À¿‡–Õ
+class Topology : public Bindable
+{
+public:
+	Topology(Graphics &gfx, D3D11_PRIMITIVE_TOPOLOGY type);
+	void Bind(Graphics &gfx) noexcept override;
+protected:
+	D3D11_PRIMITIVE_TOPOLOGY type;
+};
