@@ -4,7 +4,12 @@
 #include <memory>
 #include <algorithm>
 #include "ChiliMath.h"
+#include "Surface.h"
+#include "Sheet.h"
+#include "SkinnedBox.h"
+#include "GDIPlusManager.h"
 
+GDIPlusManager gdipm;
 
 App::App()
 {
@@ -13,7 +18,7 @@ App::App()
 
 DWORD __stdcall App::CreateWindowInDll(LPVOID lpParam)
 {
-	wnd = new Window(800, 600, "Donkey Fart Box", dll_Instance);
+	wnd = new Window(2048, 768, "Donkey Fart Box", dll_Instance);
 
 	class Factory
 	{
@@ -25,31 +30,27 @@ DWORD __stdcall App::CreateWindowInDll(LPVOID lpParam)
 		std::unique_ptr<Drawable> operator()()
 		{
 
-			return std::make_unique<Box>(
+			switch (typedist(rng))
+			{
+			case 0:
+				return std::make_unique<Box>(
 					gfx, rng, adist, ddist,
 					odist, rdist, bdist
-			);
-			//switch (typedist(rng))
-			//{
-			//	/*case 0:
-			//		return std::make_unique<Pyramid>(
-			//			gfx, rng, adist, ddist,
-			//			odist, rdist
-			//		);*/
-			//case 1:
-			//	return std::make_unique<Box>(
-			//		gfx, rng, adist, ddist,
-			//		odist, rdist, bdist
-			//	);
-			//	/*	case 2:
-			//			return std::make_unique<Melon>(
-			//				gfx, rng, adist, ddist,
-			//				odist, rdist, longdist, latdist
-			//			);*/
-			//default:
-			//	assert(false && "bad drawable type in factory");
-			//	return {};
-			//}
+				);
+			case 1:
+				return std::make_unique<Sheet>(
+					gfx, rng, adist, ddist,
+					odist, rdist
+				);
+			case 2:
+				return std::make_unique<SkinnedBox>(
+					gfx, rng, adist, ddist,
+					odist, rdist
+				);
+			default:
+				assert(false && "bad drawable type in factory");
+				return {};
+			}
 		}
 	private:
 		Graphics &gfx;
@@ -61,12 +62,15 @@ DWORD __stdcall App::CreateWindowInDll(LPVOID lpParam)
 		std::uniform_real_distribution<float> bdist { 0.4f,3.0f };
 		std::uniform_int_distribution<int> latdist { 5,20 };
 		std::uniform_int_distribution<int> longdist { 10,40 };
-		std::uniform_int_distribution<int> typedist { 0,2 };
+		std::uniform_int_distribution<int> typedist { 0,2};
 	};
 
-	Factory f(wnd->Gfx());
+	//Factory f(wnd->Gfx());
 	drawables.reserve(nDrawables);
-	std::generate_n(std::back_inserter(drawables), nDrawables, f);
+	std::generate_n(std::back_inserter(drawables), nDrawables, Factory { wnd->Gfx() });
+
+	//D:\\Happy3D\\GRSD3D12Sample\\Debug\\x64
+	//const auto s = Surface::FromFile("D:\\Happy3D\\GRSD3D12Sample\\Debug\\x64\\kappa50.png");
 
 	wnd->Gfx().SetProjection(DirectX::XMMatrixPerspectiveLH(1.0f, 3.0f / 4.0f, 0.5f, 40.0f));
 
@@ -78,7 +82,7 @@ DWORD __stdcall App::CreateWindowInDll(LPVOID lpParam)
 
 void App::TestApp()
 {
-	wnd = new Window(800, 600, "Donkey Fart Box", dll_Instance);
+	wnd = new Window(2048,768, "Donkey Fart Box", dll_Instance);
 
 	class Factory
 	{
@@ -90,31 +94,27 @@ void App::TestApp()
 		std::unique_ptr<Drawable> operator()()
 		{
 
-			return std::make_unique<Box>(
+			switch (typedist(rng))
+			{
+			case 0:
+				return std::make_unique<Box>(
 					gfx, rng, adist, ddist,
 					odist, rdist, bdist
-			);
-			//switch (typedist(rng))
-			//{
-			//	/*case 0:
-			//		return std::make_unique<Pyramid>(
-			//			gfx, rng, adist, ddist,
-			//			odist, rdist
-			//		);*/
-			//case 1:
-			//	return std::make_unique<Box>(
-			//		gfx, rng, adist, ddist,
-			//		odist, rdist, bdist
-			//	);
-			//	/*	case 2:
-			//			return std::make_unique<Melon>(
-			//				gfx, rng, adist, ddist,
-			//				odist, rdist, longdist, latdist
-			//			);*/
-			//default:
-			//	assert(false && "bad drawable type in factory");
-			//	return {};
-			//}
+				);
+			case 1:
+				return std::make_unique<Sheet>(
+					gfx, rng, adist, ddist,
+					odist, rdist
+				);
+			case 2:
+				return std::make_unique<SkinnedBox>(
+					gfx, rng, adist, ddist,
+					odist, rdist
+				);
+			default:
+				assert(false && "bad drawable type in factory");
+				return {};
+			}
 		}
 	private:
 		Graphics &gfx;
@@ -128,12 +128,17 @@ void App::TestApp()
 		std::uniform_int_distribution<int> longdist { 10,40 };
 		std::uniform_int_distribution<int> typedist { 0,2 };
 	};
-
-	Factory f(wnd->Gfx());
+	//const auto s = Surface::FromFile("Images\\kappa50.png");
+	//Factory f(wnd->Gfx());
 	drawables.reserve(nDrawables);
-	std::generate_n(std::back_inserter(drawables), nDrawables, f);
+	std::generate_n(std::back_inserter(drawables), nDrawables, Factory { wnd->Gfx() });
 
-	wnd->Gfx().SetProjection(DirectX::XMMatrixPerspectiveLH(1.0f, 3.0f / 4.0f, 0.5f, 2.0f));
+	//D:\\Happy3D\\GRSD3D12Sample\\Debug\\x64
+	//const auto s = Surface::FromFile("D:\\Happy3D\\GRSD3D12Sample\\Debug\\x64\\kappa50.png");
+
+	
+
+	wnd->Gfx().SetProjection(DirectX::XMMatrixPerspectiveLH(1.0f, 3.0f / 4.0f, 0.5f, 40.0f));
 
 	Go();
 }

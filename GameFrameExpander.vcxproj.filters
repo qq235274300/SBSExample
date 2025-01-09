@@ -102,6 +102,27 @@
     <ClInclude Include="Cube.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Surface.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Sheet.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Sampler.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Plane.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SkinnedBox.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="GDIPlusManager.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameFrameExpander.cpp">
@@ -161,6 +182,24 @@
     <ClCompile Include="WinMain.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Surface.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Sheet.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Sampler.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SkinnedBox.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="GDIPlusManager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="PixelShader.hlsl">
@@ -179,6 +218,9 @@
       <Filter>Shader</Filter>
     </FxCompile>
     <FxCompile Include="ColorIndexVS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="TexturePS.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
   </ItemGroup>

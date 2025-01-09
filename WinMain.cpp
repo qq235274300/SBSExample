@@ -7,10 +7,10 @@ int CALLBACK WinMain(
 	int       nCmdShow)
 {
 
-	App *app;
-	app = new App();
+	
+	/*App *app = new App();
 
-	app->TestApp();
+	app->TestApp();*/
 
 	return -1;
 }
