@@ -14,6 +14,7 @@ public:
 	HINSTANCE GetDllInstance();
 public:
 	 DWORD WINAPI CreateWindowInDll(LPVOID lpParam);
+	 void TestApp();
 
 private:
 	void DoFrame();
@@ -22,6 +23,7 @@ private:
 	Window* wnd;
 	HINSTANCE dll_Instance;
 private:
-	std::vector<std::unique_ptr<class Box>> boxes;
+	std::vector<std::unique_ptr<class Drawable>> drawables;
+	static constexpr size_t nDrawables = 80;
 	
 };
