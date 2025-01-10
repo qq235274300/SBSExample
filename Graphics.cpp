@@ -55,7 +55,7 @@ Graphics::Graphics(HWND hwnd)
 	);
 	// gain access to texture subresource in swap chain (back buffer)
 	wrl::ComPtr<ID3D11Resource> pBackBuffer;
-	pSwapChain->GetBuffer(0, __uuidof(ID3D11Resource), &pBackBuffer);
+ 	pSwapChain->GetBuffer(0, __uuidof(ID3D11Resource), &pBackBuffer);
 	pDevice->CreateRenderTargetView(pBackBuffer.Get(), nullptr, &pTarget);
 
 

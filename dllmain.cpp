@@ -1,19 +1,131 @@
 ﻿// dllmain.cpp : 定义 DLL 应用程序的入口点。
+#include "ChiliWin.h"
 #include "pch.h"
 #include <sstream>
 #include <vector>
 #include "reshade.hpp"
 #include "config.hpp"
 #include "App.h"
+#include "DX11Graphics.h"
+
+#define MAX_BACKBUF_COUNT	3
+
+//Render target format, DX and reshade have its own definations
+#define  RTVFormat DXGI_FORMAT_R8G8B8A8_UNORM
 
 using namespace reshade;
 using namespace reshade::api;
 
 extern bool save_texture_image(const resource_desc &desc, const subresource_data &data);
 
-App *app;
 
-struct __declspec(uuid("0d7525f9-c4e1-426e-bc99-15bbd5fd51f2")) frame_capture
+
+
+
+static reshade::api::device* re_device = nullptr;
+App *app;
+Window *window;
+HWND g_hWnd;
+HINSTANCE g_hInstance;
+static int width = 2048;
+static int height = 768;
+
+
+
+LRESULT HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
+{
+
+
+
+	switch (msg)
+	{
+	case WM_CLOSE:
+		PostQuitMessage(0); return 0;
+		break;
+
+
+	case WM_KILLFOCUS:
+		break;
+		/********************KEYBOARD MESSAGE******************************/
+	case WM_KEYDOWN:
+	case WM_SYSKEYDOWN:
+		break;
+	case WM_KEYUP:
+	case WM_SYSKEYUP:
+		// stifle this keyboard message if imgui wants to capture
+		break;
+
+
+	}
+
+	return DefWindowProc(hWnd, msg, wParam, lParam);
+};
+
+
+HWND CreateWindowInDll()
+{
+	WNDCLASSEX wc = { 0 };
+	wc.cbSize = sizeof(wc);
+	wc.style = CS_OWNDC;
+	wc.lpfnWndProc = HandleMsg;
+	//wc.lpfnWndProc = DefWindowProc;
+	wc.cbClsExtra = 0;
+	wc.cbWndExtra = 0;
+	wc.hInstance = g_hInstance;
+	wc.hIcon = nullptr;
+	/*wc.hIcon = static_cast<HICON>(LoadImage(
+		GetInstance(), MAKEINTRESOURCE(IDI_ICON2),
+		IMAGE_ICON, 32, 32, 0
+		));*/
+	wc.hCursor = nullptr;
+	wc.hbrBackground = nullptr;
+	wc.lpszMenuName = nullptr;
+	wc.lpszClassName = "Chili Direct3D Engine Window";
+	wc.hIconSm = nullptr;
+	/*wc.hIconSm = static_cast<HICON>(LoadImage(
+		GetInstance(), MAKEINTRESOURCE(IDI_ICON2),
+		IMAGE_ICON, 16, 16, 0
+		));*/
+
+	if (!RegisterClassEx(&wc))
+	{
+		MessageBoxA(NULL, "Error register Window class", "Error", MB_OK);
+
+	};
+
+	// calculate window size based on desired client region size
+	RECT wr;
+	wr.left = 100;
+	wr.right = width + wr.left;
+	wr.top = 100;
+	wr.bottom = height + wr.top;
+
+	if (AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE) == 0)
+	{
+
+	};
+	// create window & get hWnd
+	g_hWnd = CreateWindow(
+		"Chili Direct3D Engine Window", "Dog Shit",
+		WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
+		CW_USEDEFAULT, CW_USEDEFAULT, wr.right - wr.left, wr.bottom - wr.top,
+		nullptr, nullptr, g_hInstance, NULL
+	);
+	// show window
+	if (g_hWnd == nullptr)
+	{
+		reshade::log::message(reshade::log::level::error, "Create Chili Window Failed");
+		// Init ImGui Win32 Impl
+	}
+	reshade::log::message(reshade::log::level::error, "Create Chili Window Successed");
+	ShowWindow(g_hWnd, SW_SHOWDEFAULT);
+
+	UpdateWindow(g_hWnd);
+
+	return g_hWnd;
+}
+
+struct __declspec(uuid("2FA5FB3D-7873-4E67-9DDA-5D449DB2CB47")) frame_capture
 {
 
     // Create multiple host resources, to buffer copies from device to host over multiple frames
@@ -29,7 +141,15 @@ struct __declspec(uuid("0d7525f9-c4e1-426e-bc99-15bbd5fd51f2")) frame_capture
     reshade::api::resource green_screen; // 用于存储渲染目标的资源
     reshade::api::resource_view green_screen_rtv;
 
-	
+
+
+	reshade::api::resource_view RTV_SRV[MAX_BACKBUF_COUNT] = { 0 };
+
+	reshade::api::resource_view RTV[MAX_BACKBUF_COUNT] = { 0 };
+
+	reshade::api::swapchain *pOurswapchain = { 0 };
+
+	DX11Graphics dx11Graphics;
 };
 
 
@@ -37,36 +157,43 @@ struct __declspec(uuid("0d7525f9-c4e1-426e-bc99-15bbd5fd51f2")) frame_capture
 
 //static reshade::api::resource host_resource = { 0 };
 
-static void on_init(reshade::api::effect_runtime *runtime)
+static void on_init(reshade::api::device *device)
 {
-    frame_capture &data = runtime->create_private_data<frame_capture>();
+	re_device = device;
+	while (g_hWnd == NULL)
+		Sleep(10);
+
+    frame_capture &data = device->create_private_data<frame_capture>();
     // Create a fence that is used to communicate status of copies between device and host
-    if (!runtime->get_device()->create_fence(0, reshade::api::fence_flags::none, &data.copy_finished_fence))
+    /*if (!device->create_fence(0, reshade::api::fence_flags::none, &data.copy_finished_fence))
     {
         reshade::log::message(reshade::log::level::error, "Failed to create copy fence!");
-    }
+    }*/
 	
-	//data.hwd ={ 800, 600, "The Donkey Fart Box" };
+	ID3D11Device *d3d11_device = ((ID3D11Device *)re_device->get_native());
+	data.dx11Graphics.Init_Resource(d3d11_device,g_hWnd);
 }
 
 static void on_present(command_queue *queue, swapchain *swapchain, const rect *, const rect *, uint32_t, const rect *)
-{
+{ 
 
-    //reshade::api::device *const device = swapchain->get_device();
+	uint32_t BackBufferCount = swapchain->get_back_buffer_count();
+	reshade::log::message(reshade::log::level::info, ("BackBufferCount: " + std::to_string(BackBufferCount)).c_str());
 
-    //reshade::api::command_list *cmd_list = queue->get_immediate_command_list();
-    //// TODO: Add barriers/state transitions for DX12/Vulkan support (using "cmd_list->barrier()")
-    //// Copy current frame into the CPU-accessible texture
-    //cmd_list->barrier(swapchain->get_current_back_buffer(), resource_usage::shader_resource, resource_usage::copy_source);
-    //cmd_list->copy_resource(swapchain->get_current_back_buffer(), host_resource);
-    //cmd_list->barrier(swapchain->get_current_back_buffer(), resource_usage::shader_resource, resource_usage::copy_source);
-    //// Very slow ... but ensures the copy has completed before accessing the data next
-    //queue->wait_idle();
+	/*if (&window->Gfx())
+	{
+		window->Gfx().BeginFrame(0.07f, 0.0f, 0.12f);
+		window->Gfx().EndFrame();
+	}*/
+
+	
 
 }
 
 static void on_reshade_finish_effects(reshade::api::effect_runtime *runtime, reshade::api::command_list *, reshade::api::resource_view rtv, reshade::api::resource_view)
 {
+	
+	
     //runtime->capture_screenshot()
     frame_capture &data = runtime->get_private_data<frame_capture>();
     reshade::api::device *const device = runtime->get_device();
@@ -75,19 +202,22 @@ static void on_reshade_finish_effects(reshade::api::effect_runtime *runtime, res
     const reshade::api::resource rtv_resource = device->get_resource_from_view(rtv);
 
     reshade::api::resource_desc desc = device->get_resource_desc(rtv_resource);
-    // reshade::log::message(reshade::log::level::info, ("resource_view_width: " + std::to_string(desc.texture.width)).c_str());
+    reshade::log::message(reshade::log::level::info, ("resource_view_width: " + std::to_string(desc.texture.width)).c_str());
+	reshade::log::message(reshade::log::level::info, ("resource_view_width: " + std::to_string(desc.texture.height)).c_str());
+
     desc.type = reshade::api::resource_type::texture_2d;
-    /*  reshade::log::message(reshade::log::level::info, ("RTV Resource - Format: " + std::to_string(static_cast<int>(desc.texture.format))).c_str());
-      if (desc.texture.format == format::r10g10b10a2_unorm)
-      {
-          reshade::log::message(reshade::log::level::error, "RTV Resource - Format: r10g10b10a2_unorm");
-      }*/
+	reshade::log::message(reshade::log::level::info, ("RTV Resource - Format: " + std::to_string(static_cast<int>(desc.texture.format))).c_str());
       //desc.texture.format = format_to_default_typed(desc.texture.format, 0); // return 10 r16g16b16a16_float
    // desc.heap = reshade::api::memory_heap::gpu_to_cpu;
-    desc.usage = reshade::api::resource_usage::copy_dest;
+    desc.usage = reshade::api::resource_usage::copy_dest | reshade::api::resource_usage::shader_resource;
     desc.flags = reshade::api::resource_flags::none;
+	//new add
+	
+
     uint32_t originWidth = device->get_resource_desc(rtv_resource).texture.width;
     desc.texture.width = desc.texture.width * 2;
+
+
 
 
     for (size_t i = 0; i < std::size(data.host_resources); ++i)
@@ -139,7 +269,7 @@ static void on_reshade_finish_effects(reshade::api::effect_runtime *runtime, res
     queue->flush_immediate_command_list();
     // Signal the fence once the copy has finished
     queue->signal(data.copy_finished_fence, data.copy_initiated_fence_value++);
-
+	 
     // Check if a previous copy has already finished (by waiting on the corresponding fence value with a timeout of zero)
     if (!device->wait(data.copy_finished_fence, data.copy_finished_fence_value, 0))
     {
@@ -168,6 +298,18 @@ static void on_reshade_finish_effects(reshade::api::effect_runtime *runtime, res
          device->unmap_texture_region(data.host_resources[0], 0);
      }*/
 
+	
+
+	if (app && app->GetWindow())
+	{
+		if (data.host_resources[0].handle)
+		{
+			
+			app->CopyRTVResource((ID3D11Device *)device->get_native(),(ID3D11Resource *)data.host_resources[0].handle, desc);
+			reshade::log::message(reshade::log::level::info, "app window alive");
+		}
+
+	}
 
     reshade::log::message(reshade::log::level::info, "Success to create host resource!");
     for (reshade::api::resource &host_resource : data.host_resources)
@@ -175,6 +317,7 @@ static void on_reshade_finish_effects(reshade::api::effect_runtime *runtime, res
         device->destroy_resource(host_resource);
         reshade::log::message(reshade::log::level::info, "destroy_resource host resource!");
     }
+	
 
 }
 
@@ -241,20 +384,20 @@ static void on_init_device(reshade::api::device *device)
 }
 
 
+
+
 DWORD WINAPI WindowThreadProc(LPVOID lpParam)
 {
-	if (app)
+	HWND  wnd = CreateWindowInDll();
+	MSG msg;
+	while (GetMessage(&msg, wnd, 0, 0))
 	{
-		app->CreateWindowInDll(lpParam);
-		//app->Go();
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
 	}
-	else
-	{
-		reshade::log::message(reshade::log::level::info, "Failed to create window in WindowThreadProc");
-	}
-
 	return 0;
 }
+
 
 
 extern "C" __declspec(dllexport) const char *NAME = "AAA Game Expander";
@@ -283,21 +426,24 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 			return FALSE;
 		}
 		reshade::log::message(reshade::log::level::info, "Succeed to register AAA Expander addon!");
-		app = new App();
-		app->SetDllInstance(hModule); 
-		CreateThread(NULL, 0,WindowThreadProc, NULL, 0, NULL);
 
-		//Window(800, 600, "The Donkey Fart Box");
-		reshade::register_event<reshade::addon_event::init_device>(on_init_device);
+		g_hInstance = hModule;
+		/*app = new App();
+		app->SetDllInstance(hModule); */
+		//CreateThread(NULL, 0,WindowThreadProc, NULL, 0, NULL);
+		CreateThread(NULL, 0, WindowThreadProc, NULL, 0, NULL);
 
-		//reshade::register_event<reshade::addon_event::init_effect_runtime>(on_init);
+		
+
+		reshade::register_event<reshade::addon_event::init_device>(on_init);
+		//reshade::register_event<reshade::addon_event::present>(&on_present);
 		//reshade::register_event<reshade::addon_event::destroy_effect_runtime>(on_destroy);
 		// 注册 create_swapchain 事件回调
 		//reshade::register_event<reshade::addon_event::create_swapchain>(&on_create_swapchain);
 	   // reshade::log::message(reshade::log::level::info, "Successed  register ReShade AAA Expander addon!");
 
 		//reshade::register_event<reshade::addon_event::set_fullscreen_state>(on_set_fullscreen_state);
-	   // reshade::register_event<reshade::addon_event::present>(&on_present);
+	   
 	   // reshade::register_event<reshade::addon_event::reshade_finish_effects>(on_reshade_finish_effects);
 		//reshade::register_event<reshade::addon_event::bind_render_targets_and_depth_stencil>(on_bind_render_targets_and_depth_stencil);
 	   // reshade::register_event<reshade::addon_event::draw>(on_draw);

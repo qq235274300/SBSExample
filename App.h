@@ -1,6 +1,7 @@
 #pragma once
 #include "Window.h"
 #include "ChiliTimer.h"
+#include "reshade.hpp"
 class App
 {
 public:
@@ -12,6 +13,9 @@ public:
 	
 	void SetDllInstance(HINSTANCE dllInstance);
 	HINSTANCE GetDllInstance();
+	Window *GetWindow();
+public:
+	void CopyRTVResource(ID3D11Device *pDevice,ID3D11Resource *From, reshade::api::resource_desc textureDesc);
 public:
 	 DWORD WINAPI CreateWindowInDll(LPVOID lpParam);
 	 void TestApp();

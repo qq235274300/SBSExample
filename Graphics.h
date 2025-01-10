@@ -45,7 +45,7 @@ private:
 private:
 	DirectX::XMMATRIX camera;
 	bool imguiEnabled = true;
-private:
+public:
 	Microsoft::WRL::ComPtr<IDXGISwapChain> pSwapChain;
 	Microsoft::WRL::ComPtr<ID3D11Device> pDevice;
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> pContext;

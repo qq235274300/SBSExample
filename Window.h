@@ -26,7 +26,7 @@ private:
 		HINSTANCE hInst;
 	};
 public:
-	Window(int width, int height, const char *name, HINSTANCE _hInst);
+	Window(int width, int height, const char *name, HINSTANCE _hInst,HWND g_hWnd);
 	~Window();
 	Window(const Window &) = delete;
 	//Window &operator=(const Window &) = delete;
@@ -44,7 +44,7 @@ private:
 private:
 	int width;
 	int height;
-	HWND hWnd;
+	//HWND hWnd;
 	std::unique_ptr<Graphics> pGfx;
 	HINSTANCE hInst;
 	

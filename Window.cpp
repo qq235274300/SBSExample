@@ -61,7 +61,7 @@ const char *Window::WindowClass::GetName() noexcept
 
 
 // Window Stuff
-Window::Window(int width, int height, const char *name, HINSTANCE _hInst)
+Window::Window(int width, int height, const char *name, HINSTANCE _hInst,HWND g_hWnd)
 	:width(width), height(height),hInst(_hInst)
 {
 
@@ -107,38 +107,38 @@ Window::Window(int width, int height, const char *name, HINSTANCE _hInst)
 
 	};
 	// create window & get hWnd
-	hWnd = CreateWindow(
+	g_hWnd = CreateWindow(
 		"Chili Direct3D Engine Window", name,
 		WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
 		CW_USEDEFAULT, CW_USEDEFAULT, wr.right - wr.left, wr.bottom - wr.top,
 		nullptr, nullptr, hInst, this
 	);
 	// show window
-	if (hWnd == nullptr)
+	if (g_hWnd == nullptr)
 	{
 		reshade::log::message(reshade::log::level::error, "Create Chili Window Failed");
 		// Init ImGui Win32 Impl
 	}
 	reshade::log::message(reshade::log::level::error, "Create Chili Window Successed");
-	ShowWindow(hWnd, SW_SHOWDEFAULT);
-	//UpdateWindow(hWnd);
+	ShowWindow(g_hWnd, SW_SHOWDEFAULT);
+	UpdateWindow(g_hWnd);
 
-	pGfx = std::make_unique<Graphics>(hWnd);
+	pGfx = std::make_unique<Graphics>(g_hWnd);
 }
 
 Window::~Window()
 {
 	reshade::log::message(reshade::log::level::error, "Destroy Chili Window Successed");
-	DestroyWindow(hWnd);
+	//DestroyWindow(hWnd);
 }
 
 
 void Window::SetTitle(const std::string &title)
 {
-	if (SetWindowText(hWnd, title.c_str()) == 0)
-	{
-		
-	}
+// 	if (SetWindowText(g_hWnd, title.c_str()) == 0)
+// 	{
+// 		
+// 	}
 
 }
 

@@ -149,7 +149,7 @@
       <EnableUAC>false</EnableUAC>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(OutDir)$(TargetName)$(TargetExt)  D:\Happy3D\GRSD3D12Sample\Debug\x64\GameFrameExpander.addon64</Command>
+      <Command>copy $(OutDir)$(TargetName)$(TargetExt)  D:\Happy3D\BeginnerDirect3D11\x64\Debug\GameFrameExpander.addon64</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -189,9 +189,11 @@
     <ClInclude Include="ChiliWin.h" />
     <ClInclude Include="config.hpp" />
     <ClInclude Include="ConstantBuffers.h" />
+    <ClInclude Include="CopyRenderObject.h" />
     <ClInclude Include="Cube.h" />
     <ClInclude Include="Drawable.h" />
     <ClInclude Include="DrawableBase.h" />
+    <ClInclude Include="DX11Graphics.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="GameFrameExpander.h" />
     <ClInclude Include="GDIPlusManager.h" />
@@ -221,8 +223,10 @@
     <ClCompile Include="Box.cpp" />
     <ClCompile Include="ChiliTimer.cpp" />
     <ClCompile Include="ConstantBuffers.cpp" />
+    <ClCompile Include="CopyRenderObject.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="Drawable.cpp" />
+    <ClCompile Include="DX11Graphics.cpp" />
     <ClCompile Include="GameFrameExpander.cpp" />
     <ClCompile Include="GDIPlusManager.cpp" />
     <ClCompile Include="Graphics.cpp" />
@@ -253,7 +257,7 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Happy3D\GRSD3D12Sample\Debug\x64\ColorBlendPS.cso</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Happy3D\BeginnerDirect3D11\x64\Debug\ColorBlendPS.cso</ObjectFileOutput>
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\Happy3D\GRSD3D12Sample\Debug\x64\ColorBlendPS.cso</ObjectFileOutput>
     </FxCompile>
     <FxCompile Include="ColorBlendVS.hlsl">
@@ -261,13 +265,13 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Happy3D\GRSD3D12Sample\Debug\x64\ColorBlendVS.cso</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Happy3D\BeginnerDirect3D11\x64\Debug\ColorBlendVS.cso</ObjectFileOutput>
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\Happy3D\GRSD3D12Sample\Debug\x64\ColorBlendVS.cso</ObjectFileOutput>
     </FxCompile>
     <FxCompile Include="ColorIndexPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Happy3D\GRSD3D12Sample\Debug\x64\ColorIndexPS.cso</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Happy3D\BeginnerDirect3D11\x64\Debug\ColorIndexPS.cso</ObjectFileOutput>
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\Happy3D\GRSD3D12Sample\Debug\x64\ColorIndexPS.cso</ObjectFileOutput>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
@@ -275,13 +279,13 @@
     <FxCompile Include="ColorIndexVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Happy3D\GRSD3D12Sample\Debug\x64\ColorIndexVS.cso</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Happy3D\BeginnerDirect3D11\x64\Debug\ColorIndexVS.cso</ObjectFileOutput>
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\Happy3D\GRSD3D12Sample\Debug\x64\ColorIndexVS.cso</ObjectFileOutput>
     </FxCompile>
     <FxCompile Include="PixelShader.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Happy3D\GRSD3D12Sample\Debug\x64\PixelShader.cso</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Happy3D\BeginnerDirect3D11\x64\Debug\PixelShader.cso</ObjectFileOutput>
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\Happy3D\GRSD3D12Sample\Debug\x64\PixelShader.cso</ObjectFileOutput>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
@@ -289,12 +293,12 @@
     <FxCompile Include="TexturePS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Happy3D\GRSD3D12Sample\Debug\x64\TexturePS.cso</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Happy3D\BeginnerDirect3D11\x64\Debug\TexturePS.cso</ObjectFileOutput>
     </FxCompile>
     <FxCompile Include="TextureVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Happy3D\GRSD3D12Sample\Debug\x64\TextureVS.cso</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Happy3D\BeginnerDirect3D11\x64\Debug\TextureVS.cso</ObjectFileOutput>
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\Happy3D\GRSD3D12Sample\Debug\x64\VertexShader.cso</ObjectFileOutput>
     </FxCompile>
   </ItemGroup>

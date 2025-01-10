@@ -123,6 +123,12 @@
     <ClInclude Include="GDIPlusManager.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="CopyRenderObject.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DX11Graphics.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameFrameExpander.cpp">
@@ -198,6 +204,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="GDIPlusManager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CopyRenderObject.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DX11Graphics.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
