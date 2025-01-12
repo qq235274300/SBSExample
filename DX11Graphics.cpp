@@ -1,7 +1,10 @@
 #include "DX11Graphics.h"
 #include <DirectXMath.h>
+#include <dxgi.h>
 #include <dxgi1_2.h>
 #include <iostream>
+#include "reshade.hpp"
+#include <sstream>
 
 namespace wrl = Microsoft::WRL;
 namespace dx = DirectX;
@@ -12,139 +15,174 @@ namespace dx = DirectX;
 
 #define MAX_BACKBUF_COUNT   3
 
-void DX11Graphics::Init_Resource(ID3D11Device *pDevice, HWND hwnd)
+
+
+
+
+LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    LRESULT result = 0;
+    switch (msg)
+    {
+    case WM_KEYDOWN:
+    case WM_KEYUP:
+    {
+        bool isDown = (msg == WM_KEYDOWN);
+        if (wparam == VK_ESCAPE)
+            DestroyWindow(hwnd);
+        break;
+    }
+    case WM_DESTROY:
+    {
+        PostQuitMessage(0);
+        break;
+    }
+    case WM_SIZE:
+    {
+        break;
+    }
+    default:
+        result = DefWindowProcW(hwnd, msg, wparam, lparam);
+    }
+    return result;
+}
+
+
+// Window Exception Stuff
+DX11Graphics::Exception::Exception(int line, const char *file, HRESULT hr) noexcept
+    :
+    ChiliException(line, file),
+    hr(hr)
+{}
+const char *DX11Graphics::Exception::what() const noexcept
+{
+    std::ostringstream oss;
+    oss << GetType() << std::endl
+        << "[Error Code] " << GetErrorCode() << std::endl
+        << "[Description] " << GetErrorString() << std::endl
+        << GetOriginString();
+    whatBuffer = oss.str();
+    return whatBuffer.c_str();
+}
+const char *DX11Graphics::Exception::GetType() const noexcept
+{
+    return "Chili Window Exception";
+}
+std::string DX11Graphics::Exception::TranslateErrorCode(HRESULT hr) noexcept
+{
+    char *pMsgBuf = nullptr;
+    DWORD nMsgLen = FormatMessage(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER |
+        FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+        nullptr, hr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+        reinterpret_cast<LPSTR>(&pMsgBuf), 0, nullptr
+    );
+    if (nMsgLen == 0)
+    {
+        return "Unidentified error code";
+    }
+    std::string errorString = pMsgBuf;
+    LocalFree(pMsgBuf);
+    return errorString;
+}
+HRESULT DX11Graphics::Exception::GetErrorCode() const noexcept
+{
+    return hr;
+}
+std::string DX11Graphics::Exception::GetErrorString() const noexcept
+{
+    return TranslateErrorCode(hr);
+}
+
+void DX11Graphics::Init_Resource(ID3D11Device *pDevice, HWND _hwnd, HINSTANCE hInstance)
 {
     namespace wrl = Microsoft::WRL;
     HRESULT hr;
-
-    IDXGISwapChain1 *d3d11SwapChain;
+    try
     {
-        // 获取 DXGI Factory (需要创建 Swap Chain)
-        IDXGIFactory2 *dxgiFactory;
+
+        HRESULT CheckMultisampleQualityLevels(
+        DXGI_FORMAT Format,
+        UINT SampleCount,
+        UINT * pNumQualityLevels);
+
+
+        // pDevice->CheckMultisampleQualityLevels(DXGI_FORMAT_R8G8B8A8_UNORM, mMultiSamplingCount, &mMultiSamplingQualityLevels);
+        UINT createDeviceFlags = 0;
+#if defined(_DEBUG)
+        createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+
+        DXGI_SWAP_CHAIN_DESC1 swapChainDesc;
+        ZeroMemory(&swapChainDesc, sizeof(swapChainDesc));
+        swapChainDesc.Width = 0;
+        swapChainDesc.Height = 0;
+        swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        swapChainDesc.SampleDesc.Count = 1;
+        swapChainDesc.SampleDesc.Quality = 0;
+        swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+        swapChainDesc.BufferCount = 1;
+        swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+        swapChainDesc.Flags = createDeviceFlags;
+        swapChainDesc.Scaling = DXGI_SCALING_NONE;
+        swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
+
+        IDXGIDevice *dxgiDevice = nullptr;
+        IDXGIAdapter *dxgiAdapter = nullptr;
+        IDXGISwapChain1 *SwapChain1 = nullptr;
+        HRESULT hr = pDevice->QueryInterface(__uuidof(IDXGIDevice), reinterpret_cast<void **>(&dxgiDevice));
+        if (FAILED(hr))
         {
-            // 使用 Reshade 中提供的 pDevice 获取 IDXGIDevice1 接口
-            IDXGIDevice1 *dxgiDevice;
-            HRESULT hResult = pDevice->QueryInterface(__uuidof(IDXGIDevice1), (void **)&dxgiDevice);
-            if (FAILED(hResult)) {
-                MessageBoxA(0, "Failed to get IDXGIDevice1", "Fatal Error", MB_OK);
-                return;
-            }
-
-            // 获取适配器 (Adapter)
-            IDXGIAdapter *dxgiAdapter;
-            hResult = dxgiDevice->GetAdapter(&dxgiAdapter);
-            dxgiDevice->Release();
-            if (FAILED(hResult)) {
-                MessageBoxA(0, "Failed to get IDXGIAdapter", "Fatal Error", MB_OK);
-                return;
-            }
-
-            // 获取 DXGI Factory
-            hResult = dxgiAdapter->GetParent(__uuidof(IDXGIFactory2), (void **)&dxgiFactory);
-            dxgiAdapter->Release();
-            if (FAILED(hResult)) {
-                MessageBoxA(0, "Failed to get IDXGIFactory2", "Fatal Error", MB_OK);
-                return;
-            }
+            // QueryInterface 失败时，抛出异常或者进行错误处理
+            throw std::runtime_error("Failed to retrieve IDXGIDevice from ID3D11Device.");
         }
 
-        // 配置 Swap Chain 描述符
-        DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-        swapChainDesc.Width = 0; // 使用窗口的宽度
-        swapChainDesc.Height = 0; // 使用窗口的高度
-        swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; // 设置格式
-        swapChainDesc.SampleDesc.Count = 1; // 设置多重采样数量
-        swapChainDesc.SampleDesc.Quality = 0;
-        swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; // 渲染目标
-        swapChainDesc.BufferCount = 2; // 双缓冲
-        swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
-        swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD; // 丢弃
-        swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
-        swapChainDesc.Flags = 0;
+#define ReleaseObject(object) if((object) != NULL) { object->Release(); object = NULL; }
+
+
+        if (FAILED(hr = dxgiDevice->GetParent(__uuidof(IDXGIAdapter), reinterpret_cast<void **>(&dxgiAdapter))))
+        {
+            ReleaseObject(dxgiDevice);
+            throw std::runtime_error("IDXGIDevice::GetParent() failed retrieving adapter.");
+        }
+
+        IDXGIFactory2 *dxgiFactory = nullptr;
+        if (FAILED(hr = dxgiAdapter->GetParent(__uuidof(IDXGIFactory2), reinterpret_cast<void **>(&dxgiFactory))))
+        {
+            ReleaseObject(dxgiDevice);
+            ReleaseObject(dxgiAdapter);
+            throw std::runtime_error("IDXGIAdapter::GetParent() failed retrieving factory.");
+        }
+
+        if (dxgiFactory)
+        {
+            dxgiFactory->CreateSwapChainForHwnd(pDevice, _hwnd, &swapChainDesc, nullptr, nullptr, &SwapChain1);
+        }
+
+        /* hr = dxgiFactory->CreateSwapChainForHwnd(pDevice, _hwnd, &swapChainDesc, nullptr, nullptr, &pSwapChain1);
+         {
+
+
+         }
+
+         ReleaseObject(dxgiDevice);
+         ReleaseObject(dxgiAdapter);
+         ReleaseObject(dxgiFactory);*/
+
+
     }
-
-    // 创建 Swap Chain
-    /*HRESULT hResult = dxgiFactory->CreateSwapChainForHwnd(dxgiDevice, hwnd, &swapChainDesc, nullptr, nullptr, &d3d11SwapChain);
-    if (FAILED(hResult)) {
-        MessageBoxA(0, "CreateSwapChainForHwnd failed", "Fatal Error", MB_OK);
-        dxgiFactory->Release();
-        return;
+    catch (const ChiliException &e)
+    {
+        MessageBox(nullptr, e.what(), e.GetType(), MB_OK | MB_ICONEXCLAMATION);
     }
-
-    dxgiFactory->Release();
-}*/
-
-/*DXGI_SWAP_CHAIN_DESC sd = {};
-sd.BufferCount = 0;
-sd.BufferDesc.Width = 0;
-sd.BufferDesc.Height = 0;
-sd.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-sd.BufferDesc.RefreshRate.Numerator = 0;
-sd.BufferDesc.RefreshRate.Denominator = 0;
-sd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-sd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-sd.SampleDesc.Count = 1;
-sd.SampleDesc.Quality = 0;
-sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-sd.BufferCount = 1;
-sd.OutputWindow = hwnd;
-sd.Windowed = TRUE;
-sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-sd.Flags = 0;*/
-
-//  UINT swapCreateFlags = 0u;
-//#ifndef NDEBUG
-//  swapCreateFlags |= D3D11_CREATE_DEVICE_DEBUG;
-//#endif
-
-
-    //IDXGISwapChain *d3d11SwapChain;
-    //{
-    //  // Get DXGI Factory (needed to create Swap Chain)
-    //  IDXGIFactory1 *dxgiFactory;
-    //  {
-    //      IDXGIDevice1 *dxgiDevice;
-    //      HRESULT hResult = pDevice->QueryInterface(__uuidof(IDXGIDevice1), (void **)&dxgiDevice);
-    //      assert(SUCCEEDED(hResult));
-
-    //      IDXGIAdapter *dxgiAdapter;
-    //      hResult = dxgiDevice->GetAdapter(&dxgiAdapter);
-    //      assert(SUCCEEDED(hResult));
-    //      dxgiDevice->Release();
-
-    //      DXGI_ADAPTER_DESC adapterDesc;
-    //      dxgiAdapter->GetDesc(&adapterDesc);
-
-    //      OutputDebugStringA("Graphics Device: ");
-    //      OutputDebugStringW(adapterDesc.Description);
-
-    //      hResult = dxgiAdapter->GetParent(__uuidof(IDXGIFactory1), (void **)&dxgiFactory);
-    //      assert(SUCCEEDED(hResult));
-    //      dxgiAdapter->Release();
-    //  }
-
-    //  DXGI_SWAP_CHAIN_DESC d3d11SwapChainDesc = {};
-    //  d3d11SwapChainDesc.BufferDesc.Width = 0; // use window width
-    //  d3d11SwapChainDesc.BufferDesc.Height = 0; // use window height
-    //  d3d11SwapChainDesc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
-    //  d3d11SwapChainDesc.SampleDesc.Count = 1;
-    //  d3d11SwapChainDesc.SampleDesc.Quality = 0;
-    //  d3d11SwapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    //  d3d11SwapChainDesc.BufferCount = 2;
-    //  d3d11SwapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-    //  d3d11SwapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-    //  
-    //  d3d11SwapChainDesc.Flags = 0;
-
-    //  HRESULT hResult = dxgiFactory->CreateSwapChain(pDevice, &d3d11SwapChainDesc, &d3d11SwapChain);
-    //  assert(SUCCEEDED(hResult));
-
-    //  dxgiFactory->Release();
-    //}
-
-
-
-
+    catch (const std::exception &e)
+    {
+        MessageBox(nullptr, e.what(), "Standard Exception", MB_OK | MB_ICONEXCLAMATION);
+    }
+    catch (...)
+    {
+        MessageBox(nullptr, "No details available", "Unknown Exception", MB_OK | MB_ICONEXCLAMATION);
+    }
 
     //wrl::ComPtr<ID3D11Resource> pBackBuffer;
     //d3d11SwapChain->GetBuffer(0, __uuidof(ID3D11Resource), &pBackBuffer);

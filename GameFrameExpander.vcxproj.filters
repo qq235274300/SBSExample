@@ -129,6 +129,9 @@
     <ClInclude Include="DX11Graphics.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ChiliException.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameFrameExpander.cpp">
@@ -210,6 +213,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="DX11Graphics.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ChiliException.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

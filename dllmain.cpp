@@ -27,8 +27,7 @@ App *app;
 Window *window;
 HWND g_hWnd;
 HINSTANCE g_hInstance;
-static int width = 2048;
-static int height = 768;
+
 
 
 
@@ -66,7 +65,7 @@ HWND CreateWindowInDll()
 {
     WNDCLASSEX wc = { 0 };
     wc.cbSize = sizeof(wc);
-    wc.style = CS_OWNDC;
+    wc.style = CS_GLOBALCLASS; //CS_OWNDC
     wc.lpfnWndProc = HandleMsg;
     //wc.lpfnWndProc = DefWindowProc;
     wc.cbClsExtra = 0;
@@ -96,18 +95,26 @@ HWND CreateWindowInDll()
     // calculate window size based on desired client region size
     RECT wr;
     wr.left = 100;
-    wr.right = width + wr.left;
+    wr.right = WIDTH_D + wr.left;
     wr.top = 100;
-    wr.bottom = height + wr.top;
+    wr.bottom = HEIGHT + wr.top;
 
     if (AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE) == 0)
     {
 
     };
     // create window & get hWnd
-    g_hWnd = CreateWindow(
+    /*g_hWnd = CreateWindow(
         "Chili Direct3D Engine Window", "Dog Shit",
         WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
+        CW_USEDEFAULT, CW_USEDEFAULT, wr.right - wr.left, wr.bottom - wr.top,
+        nullptr, nullptr, g_hInstance, NULL
+    );*/
+
+    g_hWnd = CreateWindowExW(
+        WS_EX_OVERLAPPEDWINDOW,
+        L"Chili Direct3D Engine Window", L"Dog Shit",
+        WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU | WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT, wr.right - wr.left, wr.bottom - wr.top,
         nullptr, nullptr, g_hInstance, NULL
     );
@@ -118,7 +125,7 @@ HWND CreateWindowInDll()
         // Init ImGui Win32 Impl
     }
     reshade::log::message(reshade::log::level::error, "Create Chili Window Successed");
-    ShowWindow(g_hWnd, SW_SHOWDEFAULT);
+    ShowWindow(g_hWnd, SW_SHOWNORMAL);//SW_SHOWDEFAULT
 
     UpdateWindow(g_hWnd);
 
@@ -150,6 +157,8 @@ struct __declspec(uuid("2FA5FB3D-7873-4E67-9DDA-5D449DB2CB47")) frame_capture
     reshade::api::swapchain *pOurswapchain = { 0 };
 
     DX11Graphics dx11Graphics;
+
+    bool Init = false;
 };
 
 
@@ -171,7 +180,11 @@ static void on_init(reshade::api::device *device)
     }*/
 
     ID3D11Device *d3d11_device = ((ID3D11Device *)re_device->get_native());
-    data.dx11Graphics.Init_Resource(d3d11_device, g_hWnd);
+    if (d3d11_device && g_hWnd)
+    {
+        data.dx11Graphics.Init_Resource(d3d11_device, g_hWnd, g_hInstance);
+    }
+
 }
 
 static void on_present(command_queue *queue, swapchain *swapchain, const rect *, const rect *, uint32_t, const rect *)
@@ -180,13 +193,13 @@ static void on_present(command_queue *queue, swapchain *swapchain, const rect *,
     uint32_t BackBufferCount = swapchain->get_back_buffer_count();
     reshade::log::message(reshade::log::level::info, ("BackBufferCount: " + std::to_string(BackBufferCount)).c_str());
 
-    /*if (&window->Gfx())
+    frame_capture &data = swapchain->get_device()->get_private_data<frame_capture>();
+    ID3D11Device *d3d11_device = ((ID3D11Device *)re_device->get_native());
+    if (d3d11_device && g_hWnd && data.Init == false)
     {
-        window->Gfx().BeginFrame(0.07f, 0.0f, 0.12f);
-        window->Gfx().EndFrame();
-    }*/
-
-
+        data.dx11Graphics.Init_Resource(d3d11_device, g_hWnd, g_hInstance);
+        data.Init = true;
+    }
 
 }
 
@@ -389,6 +402,7 @@ static void on_init_device(reshade::api::device *device)
 DWORD WINAPI WindowThreadProc(LPVOID lpParam)
 {
     HWND  wnd = CreateWindowInDll();
+    //无消息循环时窗口会退出
     MSG msg;
     while (GetMessage(&msg, wnd, 0, 0))
     {
@@ -436,17 +450,17 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 
 
         reshade::register_event<reshade::addon_event::init_device>(on_init);
-        //reshade::register_event<reshade::addon_event::present>(&on_present);
-        //reshade::register_event<reshade::addon_event::destroy_effect_runtime>(on_destroy);
-        // 注册 create_swapchain 事件回调
-        //reshade::register_event<reshade::addon_event::create_swapchain>(&on_create_swapchain);
-       // reshade::log::message(reshade::log::level::info, "Successed  register ReShade AAA Expander addon!");
+        // reshade::register_event<reshade::addon_event::present>(&on_present);
+         //reshade::register_event<reshade::addon_event::destroy_effect_runtime>(on_destroy);
+         // 注册 create_swapchain 事件回调
+         //reshade::register_event<reshade::addon_event::create_swapchain>(&on_create_swapchain);
+        // reshade::log::message(reshade::log::level::info, "Successed  register ReShade AAA Expander addon!");
 
-        //reshade::register_event<reshade::addon_event::set_fullscreen_state>(on_set_fullscreen_state);
+         //reshade::register_event<reshade::addon_event::set_fullscreen_state>(on_set_fullscreen_state);
 
-       // reshade::register_event<reshade::addon_event::reshade_finish_effects>(on_reshade_finish_effects);
-        //reshade::register_event<reshade::addon_event::bind_render_targets_and_depth_stencil>(on_bind_render_targets_and_depth_stencil);
-       // reshade::register_event<reshade::addon_event::draw>(on_draw);
+        // reshade::register_event<reshade::addon_event::reshade_finish_effects>(on_reshade_finish_effects);
+         //reshade::register_event<reshade::addon_event::bind_render_targets_and_depth_stencil>(on_bind_render_targets_and_depth_stencil);
+        // reshade::register_event<reshade::addon_event::draw>(on_draw);
         break;
     }
 

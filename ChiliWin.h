@@ -44,7 +44,15 @@
 #endif
 
 #define NOMINMAX
-
 #define STRICT
+
+//¡Ÿ ±¥˙¬Î
+
+#define screenratio 0.75
+#define WIDTH 640
+#define HEIGHT int(WIDTH * screenratio)
+#define WIDTH_D WIDTH * 2
+#define MAX_BACKBUF_COUNT   3
+#define  RTVFormat DXGI_FORMAT_R8G8B8A8_UNORM
 
 #include <Windows.h>
