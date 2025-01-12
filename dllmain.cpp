@@ -39,7 +39,8 @@ LRESULT HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
     switch (msg)
     {
     case WM_CLOSE:
-        PostQuitMessage(0); return 0;
+        PostQuitMessage(0);
+        return 0;
         break;
 
 
@@ -63,61 +64,38 @@ LRESULT HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
 
 HWND CreateWindowInDll()
 {
-    WNDCLASSEX wc = { 0 };
-    wc.cbSize = sizeof(wc);
-    wc.style = CS_GLOBALCLASS; //CS_OWNDC
-    wc.lpfnWndProc = HandleMsg;
-    //wc.lpfnWndProc = DefWindowProc;
-    wc.cbClsExtra = 0;
-    wc.cbWndExtra = 0;
-    wc.hInstance = g_hInstance;
-    wc.hIcon = nullptr;
-    /*wc.hIcon = static_cast<HICON>(LoadImage(
-        GetInstance(), MAKEINTRESOURCE(IDI_ICON2),
-        IMAGE_ICON, 32, 32, 0
-        ));*/
-    wc.hCursor = nullptr;
-    wc.hbrBackground = nullptr;
-    wc.lpszMenuName = nullptr;
-    wc.lpszClassName = "Chili Direct3D Engine Window";
-    wc.hIconSm = nullptr;
-    /*wc.hIconSm = static_cast<HICON>(LoadImage(
-        GetInstance(), MAKEINTRESOURCE(IDI_ICON2),
-        IMAGE_ICON, 16, 16, 0
-        ));*/
+    WNDCLASSEXW winClass = {};
+    winClass.cbSize = sizeof(WNDCLASSEXW);
+    winClass.style = CS_HREDRAW | CS_VREDRAW;
+    winClass.lpfnWndProc = &HandleMsg;
+    winClass.hInstance = g_hInstance;
+    winClass.hIcon = nullptr;
+    winClass.lpszClassName = L"MyWindowClass";
+    winClass.hIconSm = nullptr;
 
-    if (!RegisterClassEx(&wc))
-    {
-        MessageBoxA(NULL, "Error register Window class", "Error", MB_OK);
+    if (!RegisterClassExW(&winClass)) {
+        MessageBoxA(0, "RegisterClassEx failed", "Fatal Error", MB_OK);
 
-    };
+    }
 
-    // calculate window size based on desired client region size
-    RECT wr;
-    wr.left = 100;
-    wr.right = WIDTH_D + wr.left;
-    wr.top = 100;
-    wr.bottom = HEIGHT + wr.top;
+    RECT initialRect = { 0, 0, 1024, 768 };
+    AdjustWindowRectEx(&initialRect, WS_OVERLAPPEDWINDOW, FALSE, WS_EX_OVERLAPPEDWINDOW);
+    LONG initialWidth = initialRect.right - initialRect.left;
+    LONG initialHeight = initialRect.bottom - initialRect.top;
 
-    if (AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE) == 0)
-    {
+    g_hWnd = CreateWindowExW(WS_EX_OVERLAPPEDWINDOW,
+                            winClass.lpszClassName,
+                            L"hahah1",
+                            WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                            CW_USEDEFAULT, CW_USEDEFAULT,
+                            initialWidth,
+                            initialHeight,
+                            0, 0, g_hInstance, 0);
 
-    };
-    // create window & get hWnd
-    /*g_hWnd = CreateWindow(
-        "Chili Direct3D Engine Window", "Dog Shit",
-        WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
-        CW_USEDEFAULT, CW_USEDEFAULT, wr.right - wr.left, wr.bottom - wr.top,
-        nullptr, nullptr, g_hInstance, NULL
-    );*/
+    if (!g_hWnd) {
+        MessageBoxA(0, "CreateWindowEx failed", "Fatal Error", MB_OK);
 
-    g_hWnd = CreateWindowExW(
-        WS_EX_OVERLAPPEDWINDOW,
-        L"Chili Direct3D Engine Window", L"Dog Shit",
-        WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU | WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, CW_USEDEFAULT, wr.right - wr.left, wr.bottom - wr.top,
-        nullptr, nullptr, g_hInstance, NULL
-    );
+    }
     // show window
     if (g_hWnd == nullptr)
     {
@@ -161,29 +139,42 @@ struct __declspec(uuid("2FA5FB3D-7873-4E67-9DDA-5D449DB2CB47")) frame_capture
     bool Init = false;
 };
 
-
+DX11Graphics dx11Graphics;
 
 
 //static reshade::api::resource host_resource = { 0 };
-
+frame_capture data;
+bool Firston_INIT = true;
 static void on_init(reshade::api::device *device)
 {
     re_device = device;
     while (g_hWnd == NULL)
+    {
         Sleep(10);
-
-    frame_capture &data = device->create_private_data<frame_capture>();
-    // Create a fence that is used to communicate status of copies between device and host
-    /*if (!device->create_fence(0, reshade::api::fence_flags::none, &data.copy_finished_fence))
-    {
-        reshade::log::message(reshade::log::level::error, "Failed to create copy fence!");
-    }*/
-
-    ID3D11Device *d3d11_device = ((ID3D11Device *)re_device->get_native());
-    if (d3d11_device && g_hWnd)
-    {
-        data.dx11Graphics.Init_Resource(d3d11_device, g_hWnd, g_hInstance);
     }
+    ID3D11Device *d3d11_device = ((ID3D11Device *)re_device->get_native());
+    dx11Graphics.Init_Resource(d3d11_device, g_hWnd, g_hInstance);
+    //if (Firston_INIT)
+    //{
+    //    Firston_INIT = false;
+    //    device->create_private_data<frame_capture>();
+    //    data = device->get_private_data <frame_capture>();
+
+    //    // Create a fence that is used to communicate status of copies between device and host
+    //    /*if (!device->create_fence(0, reshade::api::fence_flags::none, &data.copy_finished_fence))
+    //    {
+    //        reshade::log::message(reshade::log::level::error, "Failed to create copy fence!");
+    //    }*/
+
+
+    //    if (g_hInstance)
+    //    {
+    //        ID3D11Device *d3d11_device = ((ID3D11Device *)re_device->get_native());
+    //        data.dx11Graphics.Init_Resource(d3d11_device, g_hWnd, g_hInstance);
+    //        //data.dx11Graphics.TestCreateSwapChain(g_hInstance);
+    //    }
+    //}
+
 
 }
 
@@ -417,7 +408,7 @@ DWORD WINAPI WindowThreadProc(LPVOID lpParam)
 extern "C" __declspec(dllexport) const char *NAME = "AAA Game Expander";
 extern "C" __declspec(dllexport) const char *DESCRIPTION = "AAA Expander Game Graphics to 3840.";
 
-
+bool attached = false;
 
 BOOL APIENTRY DllMain(HMODULE hModule,
                        DWORD  ul_reason_for_call,
@@ -430,6 +421,11 @@ BOOL APIENTRY DllMain(HMODULE hModule,
     {
     case DLL_PROCESS_ATTACH:
     {
+        g_hInstance = hModule;
+        /*app = new App();
+        app->SetDllInstance(hModule); */
+        //CreateThread(NULL, 0,WindowThreadProc, NULL, 0, NULL);
+        CreateThread(NULL, 0, WindowThreadProc, NULL, 0, NULL);
 
         // 注册插件
         if (!reshade::register_addon(hModule))
@@ -441,26 +437,21 @@ BOOL APIENTRY DllMain(HMODULE hModule,
         }
         reshade::log::message(reshade::log::level::info, "Succeed to register AAA Expander addon!");
 
-        g_hInstance = hModule;
-        /*app = new App();
-        app->SetDllInstance(hModule); */
-        //CreateThread(NULL, 0,WindowThreadProc, NULL, 0, NULL);
-        CreateThread(NULL, 0, WindowThreadProc, NULL, 0, NULL);
+
+        // reshade::register_event<reshade::addon_event::init_device>(on_init);
 
 
+         // reshade::register_event<reshade::addon_event::present>(&on_present);
+          //reshade::register_event<reshade::addon_event::destroy_effect_runtime>(on_destroy);
+          // 注册 create_swapchain 事件回调
+          //reshade::register_event<reshade::addon_event::create_swapchain>(&on_create_swapchain);
+         // reshade::log::message(reshade::log::level::info, "Successed  register ReShade AAA Expander addon!");
 
-        reshade::register_event<reshade::addon_event::init_device>(on_init);
-        // reshade::register_event<reshade::addon_event::present>(&on_present);
-         //reshade::register_event<reshade::addon_event::destroy_effect_runtime>(on_destroy);
-         // 注册 create_swapchain 事件回调
-         //reshade::register_event<reshade::addon_event::create_swapchain>(&on_create_swapchain);
-        // reshade::log::message(reshade::log::level::info, "Successed  register ReShade AAA Expander addon!");
+          //reshade::register_event<reshade::addon_event::set_fullscreen_state>(on_set_fullscreen_state);
 
-         //reshade::register_event<reshade::addon_event::set_fullscreen_state>(on_set_fullscreen_state);
-
-        // reshade::register_event<reshade::addon_event::reshade_finish_effects>(on_reshade_finish_effects);
-         //reshade::register_event<reshade::addon_event::bind_render_targets_and_depth_stencil>(on_bind_render_targets_and_depth_stencil);
-        // reshade::register_event<reshade::addon_event::draw>(on_draw);
+         // reshade::register_event<reshade::addon_event::reshade_finish_effects>(on_reshade_finish_effects);
+          //reshade::register_event<reshade::addon_event::bind_render_targets_and_depth_stencil>(on_bind_render_targets_and_depth_stencil);
+         // reshade::register_event<reshade::addon_event::draw>(on_draw);
         break;
     }
 

@@ -26,6 +26,7 @@ public:
 public:
     DX11Graphics() = default;
 
+    void TestCreateSwapChain(HINSTANCE hInstance);
     void Init_Resource(ID3D11Device *pDevice, HWND _hwnd, HINSTANCE hInstance);
 
 
@@ -40,6 +41,8 @@ public:
     Microsoft::WRL::ComPtr<IDXGISwapChain1> pSwapChain1;*/
 
     // Microsoft::WRL::ComPtr<ID3D11Device> pGraphicsDevice;
+    Microsoft::WRL::ComPtr<IDXGISwapChain1> pSwapChain1;
+
     Microsoft::WRL::ComPtr<ID3D11DeviceContext> pContext;
     Microsoft::WRL::ComPtr<ID3D11RenderTargetView> pTarget;
     Microsoft::WRL::ComPtr<ID3D11DepthStencilView> pDSV;
