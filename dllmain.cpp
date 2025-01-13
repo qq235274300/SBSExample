@@ -29,7 +29,7 @@ extern bool save_texture_image(const resource_desc &desc, const subresource_data
 static reshade::api::device *re_device = nullptr;
 App *app;
 Window *window;
-HWND g_hWnd;
+HWND g_hWnd = nullptr;
 HINSTANCE g_hInstance;
 
 
@@ -70,12 +70,11 @@ HWND CreateWindowInDll()
 {
     WNDCLASSEXW winClass = {};
     winClass.cbSize = sizeof(WNDCLASSEXW);
-    winClass.style = CS_HREDRAW | CS_VREDRAW;
+    winClass.style = CS_GLOBALCLASS;
     winClass.lpfnWndProc = &HandleMsg;
     winClass.hInstance = g_hInstance;
-    winClass.hIcon = nullptr;
     winClass.lpszClassName = L"MyWindowClass";
-    winClass.hIconSm = nullptr;
+
 
     if (!RegisterClassExW(&winClass)) {
         MessageBoxA(0, "RegisterClassEx failed", "Fatal Error", MB_OK);
@@ -184,10 +183,15 @@ bool InitializeSwapChain(HWND hwnd, ID3D11Device *d3d11Device, int width, int he
     swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
 
+    if (!IsWindow(g_hWnd) || !d3d11Device) {
+        MessageBox(nullptr, "Invalid HWND!", "Error", MB_OK);
+
+    }
+    HWND a = nullptr;
     // 创建 SwapChain
     hr = dxgiFactory->CreateSwapChainForHwnd(
         d3d11Device,
-        hwnd,
+        g_hWnd,
         &swapChainDesc,
         nullptr, // 可选的全屏参数
         nullptr, // 输出限制参数
@@ -208,12 +212,12 @@ bool InitializeSwapChain(HWND hwnd, ID3D11Device *d3d11Device, int width, int he
 bool Firston_INIT = true;
 static void on_init(reshade::api::device *device)
 {
-    re_device = device;
-    while (g_hWnd == NULL)
+
+    while (g_hWnd == NULL || !IsWindow(g_hWnd))
     {
         Sleep(10);
     }
-    ID3D11Device *d3d11_device = ((ID3D11Device *)re_device->get_native());
+    ID3D11Device *d3d11_device = ((ID3D11Device *)device->get_native());
 
     ComPtr<IDXGISwapChain1> swapChain;
     if (!InitializeSwapChain(g_hWnd, d3d11_device, 800, 600, swapChain)) {
