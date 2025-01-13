@@ -326,21 +326,21 @@ void DX11Graphics::Init_Resource(ID3D11Device *pDevice, HWND _hwnd, HINSTANCE hI
         //ZeroMemory(&swapChainDesc, sizeof(swapChainDesc));
         swapChainDesc.Width = 0;
         swapChainDesc.Height = 0;
-        swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB; //DXGI_FORMAT_R8G8B8A8_UNORM  DXGI_FORMAT_B8G8R8A8_UNORM  DXGI_FORMAT_B8G8R8A8_UNORM_SRGB
+        swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; //DXGI_FORMAT_R8G8B8A8_UNORM  DXGI_FORMAT_B8G8R8A8_UNORM  DXGI_FORMAT_B8G8R8A8_UNORM_SRGB
         swapChainDesc.SampleDesc.Count = 1;
         swapChainDesc.SampleDesc.Quality = 0;
         swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; //DXGI_USAGE_RENDER_TARGET_OUTPUT DXGI_USAGE_BACK_BUFFER 
         swapChainDesc.BufferCount = 2;
-        swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;//DXGI_SWAP_EFFECT_FLIP_DISCARD  DXGI_SWAP_EFFECT_DISCARD DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL
+        swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;//DXGI_SWAP_EFFECT_FLIP_DISCARD  DXGI_SWAP_EFFECT_DISCARD DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL
         swapChainDesc.Flags = 0;
-        swapChainDesc.Scaling = DXGI_SCALING_STRETCH; // DXGI_SCALING_STRETCH  DXGI_SCALING_NONE
-        swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;//DXGI_ALPHA_MODE_IGNORE
-        swapChainDesc.Stereo = FALSE;
+        swapChainDesc.Scaling = DXGI_SCALING_NONE; // DXGI_SCALING_STRETCH  DXGI_SCALING_NONE
+        swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;//DXGI_ALPHA_MODE_IGNORE DXGI_ALPHA_MODE_UNSPECIFIED
+        swapChainDesc.Stereo = false;
 
         ID3D11Device1 *d3d11Device;
         IDXGIDevice1 *dxgiDevice = nullptr;
         IDXGIAdapter *dxgiAdapter = nullptr;
-        IDXGISwapChain1 *d3d11SwapChain;
+        IDXGISwapChain1 *d3d11SwapChain = nullptr;
 
 
 
@@ -386,29 +386,31 @@ void DX11Graphics::Init_Resource(ID3D11Device *pDevice, HWND _hwnd, HINSTANCE hI
             throw std::runtime_error("IDXGIAdapter::GetParent() failed retrieving factory.");
         }
 
+
         if (dxgiFactory && pDevice && d3d11Device)
         {
-            hr = dxgiFactory->CreateSwapChainForHwnd(d3d11Device, _hwnd, &swapChainDesc, 0, 0, &d3d11SwapChain);
+            hr = dxgiFactory->CreateSwapChainForHwnd(reinterpret_cast<IUnknown *>(pDevice), _hwnd, &swapChainDesc, 0, 0, &d3d11SwapChain);
+            //dxgiFactory->CreateSwapChainForCoreWindow(d3d11Device, reinterpret_cast<IUnknown *>(_hwnd), &swapChainDesc, 0, &d3d11SwapChain);
             // assert(SUCCEEDED(hr));
              // ReleaseObject(dxgiFactory);
         }
-        /* if (d3d11SwapChain)
-         {
-             reshade::log::message(reshade::log::level::info, ("pSwapChain1: Live"));
-         }
-         else
-         {
-             reshade::log::message(reshade::log::level::info, ("pSwapChain1: Not Live"));
-         }*/
+        if (d3d11SwapChain)
+        {
+            reshade::log::message(reshade::log::level::info, ("pSwapChain1: Live"));
+        }
+        else
+        {
+            reshade::log::message(reshade::log::level::info, ("pSwapChain1: Not Live"));
+        }
 
-         /*ID3D11Texture2D *d3d11FrameBuffer;
-         ID3D11RenderTargetView *d3d11FrameBufferView;
-         ID3D11DepthStencilView *depthBufferView;
-         hr = pSwapChain1->GetBuffer(0, __uuidof(ID3D11Texture2D), (void **)&d3d11FrameBuffer);
-         assert(SUCCEEDED(hr));
+        /*ID3D11Texture2D *d3d11FrameBuffer;
+        ID3D11RenderTargetView *d3d11FrameBufferView;
+        ID3D11DepthStencilView *depthBufferView;
+        hr = pSwapChain1->GetBuffer(0, __uuidof(ID3D11Texture2D), (void **)&d3d11FrameBuffer);
+        assert(SUCCEEDED(hr));
 
-         hr = pDevice->CreateRenderTargetView(d3d11FrameBuffer, 0, &d3d11FrameBufferView);
-         assert(SUCCEEDED(hr));*/
+        hr = pDevice->CreateRenderTargetView(d3d11FrameBuffer, 0, &d3d11FrameBufferView);
+        assert(SUCCEEDED(hr));*/
 
     }
     catch (const ChiliException &e)

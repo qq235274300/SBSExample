@@ -438,20 +438,20 @@ BOOL APIENTRY DllMain(HMODULE hModule,
         reshade::log::message(reshade::log::level::info, "Succeed to register AAA Expander addon!");
 
 
-        // reshade::register_event<reshade::addon_event::init_device>(on_init);
+        reshade::register_event<reshade::addon_event::init_device>(on_init);
 
 
-         // reshade::register_event<reshade::addon_event::present>(&on_present);
-          //reshade::register_event<reshade::addon_event::destroy_effect_runtime>(on_destroy);
-          // 注册 create_swapchain 事件回调
-          //reshade::register_event<reshade::addon_event::create_swapchain>(&on_create_swapchain);
-         // reshade::log::message(reshade::log::level::info, "Successed  register ReShade AAA Expander addon!");
+        // reshade::register_event<reshade::addon_event::present>(&on_present);
+         //reshade::register_event<reshade::addon_event::destroy_effect_runtime>(on_destroy);
+         // 注册 create_swapchain 事件回调
+         //reshade::register_event<reshade::addon_event::create_swapchain>(&on_create_swapchain);
+        // reshade::log::message(reshade::log::level::info, "Successed  register ReShade AAA Expander addon!");
 
-          //reshade::register_event<reshade::addon_event::set_fullscreen_state>(on_set_fullscreen_state);
+         //reshade::register_event<reshade::addon_event::set_fullscreen_state>(on_set_fullscreen_state);
 
-         // reshade::register_event<reshade::addon_event::reshade_finish_effects>(on_reshade_finish_effects);
-          //reshade::register_event<reshade::addon_event::bind_render_targets_and_depth_stencil>(on_bind_render_targets_and_depth_stencil);
-         // reshade::register_event<reshade::addon_event::draw>(on_draw);
+        // reshade::register_event<reshade::addon_event::reshade_finish_effects>(on_reshade_finish_effects);
+         //reshade::register_event<reshade::addon_event::bind_render_targets_and_depth_stencil>(on_bind_render_targets_and_depth_stencil);
+        // reshade::register_event<reshade::addon_event::draw>(on_draw);
         break;
     }
 

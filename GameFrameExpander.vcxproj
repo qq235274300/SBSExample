@@ -149,7 +149,7 @@
       <EnableUAC>false</EnableUAC>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(OutDir)$(TargetName)$(TargetExt)  D:\Lenovo\a-car-game-written-in-direct3d\bin\GameFrameExpander.addon64</Command>
+      <Command>copy $(OutDir)$(TargetName)$(TargetExt)  D:\Lenovo\BeginnerDirect3D11\x64\Debug\GameFrameExpander.addon64</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
