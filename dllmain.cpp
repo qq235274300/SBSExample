@@ -7,9 +7,11 @@
 #include "config.hpp"
 #include "App.h"
 #include "DX11Graphics.h"
+#include <d3d11.h>
+#include <d3dcompiler.h>
+
 
 #define MAX_BACKBUF_COUNT   3
-
 //Render target format, DX and reshade have its own definations
 #define  RTVFormat DXGI_FORMAT_R8G8B8A8_UNORM
 
@@ -19,6 +21,12 @@ using namespace reshade;
 using namespace reshade::api;
 
 using namespace Microsoft::WRL;
+
+#pragma comment  (lib,"d3d11.lib")
+#pragma comment (lib,"D3DCompiler.lib")
+#pragma comment(lib, "dxgi.lib")
+
+
 
 extern bool save_texture_image(const resource_desc &desc, const subresource_data &data);
 
@@ -31,38 +39,23 @@ App *app;
 Window *window;
 HWND g_hWnd = nullptr;
 HINSTANCE g_hInstance;
-
+LPCWSTR WinClassName = L"MyWindowClass";
 
 
 
 LRESULT HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
 {
-
-
-
-    switch (msg)
-    {
-    case WM_CLOSE:
-        PostQuitMessage(0);
-        return 0;
-        break;
-
-
-    case WM_KILLFOCUS:
-        break;
-        /********************KEYBOARD MESSAGE******************************/
-    case WM_KEYDOWN:
-    case WM_SYSKEYDOWN:
-        break;
-    case WM_KEYUP:
-    case WM_SYSKEYUP:
-        // stifle this keyboard message if imgui wants to capture
-        break;
-
-
-    }
-
-    return DefWindowProc(hWnd, msg, wParam, lParam);
+	switch (msg)
+	{
+	case WM_CLOSE:
+		PostQuitMessage(0);
+		return 0;
+	case WM_DESTROY:
+		DestroyWindow(hWnd);
+		return 0;
+	default:
+		return DefWindowProc(hWnd, msg, wParam, lParam);
+	}
 };
 
 
@@ -81,34 +74,7 @@ HWND CreateWindowInDll()
 
     }
 
-    RECT initialRect = { 0, 0, 1024, 768 };
-    AdjustWindowRectEx(&initialRect, WS_OVERLAPPEDWINDOW, FALSE, WS_EX_OVERLAPPEDWINDOW);
-    LONG initialWidth = initialRect.right - initialRect.left;
-    LONG initialHeight = initialRect.bottom - initialRect.top;
-
-    g_hWnd = CreateWindowExW(WS_EX_OVERLAPPEDWINDOW,
-                            winClass.lpszClassName,
-                            L"hahah1",
-                            WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-                            CW_USEDEFAULT, CW_USEDEFAULT,
-                            initialWidth,
-                            initialHeight,
-                            0, 0, g_hInstance, 0);
-
-    if (!g_hWnd) {
-        MessageBoxA(0, "CreateWindowEx failed", "Fatal Error", MB_OK);
-
-    }
-    // show window
-    if (g_hWnd == nullptr)
-    {
-        reshade::log::message(reshade::log::level::error, "Create Chili Window Failed");
-        // Init ImGui Win32 Impl
-    }
-    reshade::log::message(reshade::log::level::error, "Create Chili Window Successed");
-    ShowWindow(g_hWnd, SW_SHOWNORMAL);//SW_SHOWDEFAULT
-
-    UpdateWindow(g_hWnd);
+   
 
     return g_hWnd;
 }
@@ -140,68 +106,141 @@ struct __declspec(uuid("2FA5FB3D-7873-4E67-9DDA-5D449DB2CB47")) frame_capture
     DX11Graphics dx11Graphics;
 
     bool Init = false;
+
+	bool gameSRVCreated = false;
 };
 
 DX11Graphics dx11Graphics;
 
 bool InitializeSwapChain(HWND hwnd, ID3D11Device *d3d11Device, int width, int height, ComPtr<IDXGISwapChain1> &swapChain) {
     // 获取 DXGI 工厂
+	HRESULT hr;
 
+ 	Microsoft::WRL::ComPtr<IDXGISwapChain> pSwapChain;
+	Microsoft::WRL::ComPtr<IDXGISwapChain> pSwapChain1;
+	Microsoft::WRL::ComPtr<ID3D11Device> pDevice;
+	Microsoft::WRL::ComPtr<ID3D11DeviceContext> pContext;
 
-    ComPtr<IDXGIDevice> dxgiDevice;
-    HRESULT hr = d3d11Device->QueryInterface(__uuidof(IDXGIDevice), &dxgiDevice);
-    if (FAILED(hr)) {
-        MessageBox(hwnd, "Failed to get DXGI device!", "Error", MB_OK);
-        return false;
-    }
+	Microsoft::WRL::ComPtr<IDXGIFactory1> pFactory;
+	hr = CreateDXGIFactory1(IID_PPV_ARGS(pFactory.GetAddressOf()));
+	if (FAILED(hr)) {
+		throw std::runtime_error("IDXGIFactoryクラスの作成に失敗しました。");
+	}
 
-    ComPtr<IDXGIAdapter> dxgiAdapter;
-    hr = dxgiDevice->GetAdapter(&dxgiAdapter);
-    if (FAILED(hr)) {
-        MessageBox(hwnd, "Failed to get DXGI adapter!", "Error", MB_OK);
-        return false;
-    }
+	DXGI_SWAP_CHAIN_DESC swapChainDesc = { 0 };
+	swapChainDesc.OutputWindow = g_hWnd;
+	swapChainDesc.BufferCount = 3;
+	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD; //DXGI_SWAP_EFFECT_DISCARD DXGI_SWAP_EFFECT_SEQUENTIAL
 
-    ComPtr<IDXGIFactory2> dxgiFactory;
-    hr = dxgiAdapter->GetParent(__uuidof(IDXGIFactory2), &dxgiFactory);
-    if (FAILED(hr)) {
-        MessageBox(hwnd, "Failed to get DXGI factory!", "Error", MB_OK);
-        return false;
-    }
+	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;//DXGI_USAGE_BACK_BUFFER DXGI_USAGE_RENDER_TARGET_OUTPUT
+	swapChainDesc.Flags = 0;
+	//swapChainDesc.Flags = 0;
+	swapChainDesc.SampleDesc.Count = 1;
+	swapChainDesc.SampleDesc.Quality = 0;
+	//フルスクリーンとウィンドモードの切り替えがしたい場合は、まずウィンドウモードとして生成することを推奨しているみたい
+	swapChainDesc.Windowed = true;
+	swapChainDesc.BufferDesc.Width = 0;
+	swapChainDesc.BufferDesc.Height = 0;
+	swapChainDesc.BufferDesc.RefreshRate.Numerator = 0;
+	swapChainDesc.BufferDesc.RefreshRate.Denominator = 0;
+	swapChainDesc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+	swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+	swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 
-    // 配置 SwapChain 描述
-    DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-    swapChainDesc.Width = width;
-    swapChainDesc.Height = height;
-    swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    swapChainDesc.Stereo = FALSE;
-    swapChainDesc.SampleDesc.Count = 1;
-    swapChainDesc.SampleDesc.Quality = 0;
-    swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapChainDesc.BufferCount = 2;
-    swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
-    swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-    swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
+	
+	UINT swapCreateFlags = 0u;
+#ifndef NDEBUG
+	swapCreateFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
 
-    if (!IsWindow(g_hWnd) || !d3d11Device) {
-        MessageBox(nullptr, "Invalid HWND!", "Error", MB_OK);
+	D3D11CreateDeviceAndSwapChain(
+		nullptr,
+		D3D_DRIVER_TYPE_HARDWARE,
+		nullptr,
+		swapCreateFlags,
+		nullptr,
+		0,
+		D3D11_SDK_VERSION,
+		&swapChainDesc,
+		&pSwapChain,
+		&pDevice,
+		nullptr,
+		&pContext
+	);
 
-    }
-    HWND a = nullptr;
-    // 创建 SwapChain
-    hr = dxgiFactory->CreateSwapChainForHwnd(
-        d3d11Device,
-        g_hWnd,
-        &swapChainDesc,
-        nullptr, // 可选的全屏参数
-        nullptr, // 输出限制参数
-        &swapChain
-    );
+	
+	/*hr = pFactory->CreateSwapChain(d3d11Device, &swapChainDesc, &pSwapChain);
+	if (FAILED(hr)) {
+		throw std::runtime_error("IDXGISwapChainの作成に失敗");
+	}*/
 
-    if (FAILED(hr)) {
-        MessageBox(hwnd, "Failed to create SwapChain!", "Error", MB_OK);
-        return false;
-    }
+	if (pSwapChain) {
+		 reshade::log::message(reshade::log::level::info, ("host_resource_index: 1"));
+	}
+	else {
+		reshade::log::message(reshade::log::level::info, ("host_resource_index: 2" ));
+	}
+
+	return true;
+	//hr = pFactory->CreateSwapChain(d3d11Device, &swapChainDesc,swapChmpSwapChain.GetAddressOf());
+	//if (FAILED(hr)) {
+	//	throw std::runtime_error("IDXGISwapChainの作成に失敗");
+	//}
+
+ //   ComPtr<IDXGIDevice> dxgiDevice;
+ //    hr = d3d11Device->QueryInterface(__uuidof(IDXGIDevice), &dxgiDevice);
+ //   if (FAILED(hr)) {
+ //       MessageBox(hwnd, "Failed to get DXGI device!", "Error", MB_OK);
+ //       return false;
+ //   }
+
+ //   ComPtr<IDXGIAdapter> dxgiAdapter;
+ //   hr = dxgiDevice->GetAdapter(&dxgiAdapter);
+ //   if (FAILED(hr)) {
+ //       MessageBox(hwnd, "Failed to get DXGI adapter!", "Error", MB_OK);
+ //       return false;
+ //   }
+
+ //   ComPtr<IDXGIFactory2> dxgiFactory;
+ //   hr = dxgiAdapter->GetParent(__uuidof(IDXGIFactory2), &dxgiFactory);
+ //   if (FAILED(hr)) {
+ //       MessageBox(hwnd, "Failed to get DXGI factory!", "Error", MB_OK);
+ //       return false;
+ //   }
+
+ //   // 配置 SwapChain 描述
+ //   DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
+ //   swapChainDesc.Width = width;
+ //   swapChainDesc.Height = height;
+ //   swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+ //   swapChainDesc.Stereo = FALSE;
+ //   swapChainDesc.SampleDesc.Count = 1;
+ //   swapChainDesc.SampleDesc.Quality = 0;
+ //   swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+ //   swapChainDesc.BufferCount = 2;
+ //   //swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
+ //   swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+ //  // swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
+
+ //   if (!IsWindow(g_hWnd) || !d3d11Device) {
+ //       MessageBox(nullptr, "Invalid HWND!", "Error", MB_OK);
+
+ //   }
+ //   HWND a = nullptr;
+ //   // 创建 SwapChain
+ //   hr = dxgiFactory->CreateSwapChainForHwnd(
+ //       d3d11Device,
+ //       g_hWnd,
+ //       &swapChainDesc,
+ //       nullptr, // 可选的全屏参数
+ //       nullptr, // 输出限制参数
+ //       &swapChain
+ //   );
+
+ //   if (FAILED(hr)) {
+ //       MessageBox(hwnd, "Failed to create SwapChain!", "Error", MB_OK);
+ //       return false;
+ //   }
 
     return true;
 }
@@ -209,21 +248,51 @@ bool InitializeSwapChain(HWND hwnd, ID3D11Device *d3d11Device, int width, int he
 
 //static reshade::api::resource host_resource = { 0 };
 
-bool Firston_INIT = true;
+static bool Firston_INIT = false;
 static void on_init(reshade::api::device *device)
 {
-
+	re_device = device;
     while (g_hWnd == NULL || !IsWindow(g_hWnd))
     {
         Sleep(10);
     }
-    ID3D11Device *d3d11_device = ((ID3D11Device *)device->get_native());
+	device_api api = device->get_api();
+	switch (api)
+	{
+	case reshade::api::device_api::d3d9:
+		reshade::log::message(reshade::log::level::info, ("device - API: 1"));
+		break;
+	case reshade::api::device_api::d3d10:
+		reshade::log::message(reshade::log::level::info, ("device - API: 2"));
+		break;
+	case reshade::api::device_api::d3d11:
+		reshade::log::message(reshade::log::level::info, ("device - API: 3"));
+		break;
+	case reshade::api::device_api::d3d12:
+		reshade::log::message(reshade::log::level::info, ("device - API: 4"));
+		break;
+	case reshade::api::device_api::opengl:
+		reshade::log::message(reshade::log::level::info, ("device - API: 5"));
+		break;
+	case reshade::api::device_api::vulkan:
+		reshade::log::message(reshade::log::level::info, ("device - API: 6"));
+		break;
+	default:
+		break;
+	}
 
-    ComPtr<IDXGISwapChain1> swapChain;
-    if (!InitializeSwapChain(g_hWnd, d3d11_device, 800, 600, swapChain)) {
-        MessageBox(nullptr, "Failed to initialize SwapChain!", "Error", MB_OK);
-        return;
-    }
+	//desc.texture.format = format_to_default_typed(desc.texture.format, 0); // return 10 r16g16b16a16_float
+	
+	/*if (Firston_INIT == false)
+	{
+		ID3D11Device *d3d11_device = ((ID3D11Device *)device->get_native());
+
+		ComPtr<IDXGISwapChain1> swapChain;
+
+		Firston_INIT = InitializeSwapChain(g_hWnd, d3d11_device, 800, 600, swapChain);
+	}
+	*/
+   
 
     //dx11Graphics.Init_Resource(d3d11_device, g_hWnd, g_hInstance);
     //if (Firston_INIT)
@@ -252,18 +321,77 @@ static void on_init(reshade::api::device *device)
 
 static void on_present(command_queue *queue, swapchain *swapchain, const rect *, const rect *, uint32_t, const rect *)
 {
-
+	
     uint32_t BackBufferCount = swapchain->get_back_buffer_count();
     reshade::log::message(reshade::log::level::info, ("BackBufferCount: " + std::to_string(BackBufferCount)).c_str());
 
-    frame_capture &data = swapchain->get_device()->get_private_data<frame_capture>();
+   /* frame_capture &data = swapchain->get_device()->get_private_data<frame_capture>();
     ID3D11Device *d3d11_device = ((ID3D11Device *)re_device->get_native());
     if (d3d11_device && g_hWnd && data.Init == false)
     {
         data.dx11Graphics.Init_Resource(d3d11_device, g_hWnd, g_hInstance);
         data.Init = true;
-    }
+    }*/
 
+
+	while (g_hWnd == NULL || !IsWindow(g_hWnd))
+	{
+		Sleep(10);
+	}
+	//ID3D11Device *d3d11_device = (ID3D11Device *)swapchain->get_device();
+	if (Firston_INIT == false)
+	{
+		reshade::api::device* device = swapchain->get_device();
+		frame_capture& data = device->create_private_data<frame_capture>();
+
+		ComPtr<IDXGISwapChain1> swapChain;
+		Firston_INIT = data.dx11Graphics.CreateDeviceAndSwapChain(g_hWnd);
+		//Firston_INIT = InitializeSwapChain(g_hWnd, d3d11_device, 800, 600, swapChain);
+	}
+	else
+	{
+	
+		reshade::api::device *dev = nullptr;
+		dev = swapchain->get_device();
+		frame_capture &devData = dev->get_private_data <frame_capture>();
+		reshade::api::resource_desc desc = dev->get_resource_desc(swapchain->get_current_back_buffer());
+
+		
+		ID3D11Resource *pbackbuf;
+		reshade::api::resource d3dres = swapchain->get_current_back_buffer();
+		pbackbuf = (ID3D11Resource *)(d3dres.handle);
+	
+		devData.dx11Graphics.CreateSRV_forGameRTV((DXGI_FORMAT)desc.texture.format,pbackbuf);
+		devData.gameSRVCreated = true;
+
+
+		if (swapchain->get_device()->get_private_data<frame_capture>().dx11Graphics.pContext)
+		{
+			/*Microsoft::WRL::ComPtr<ID3D11DeviceContext> pContext = swapchain->get_device()->get_private_data<frame_capture>().dx11Graphics.pContext;
+			FLOAT backgroundColor[4] = { 0.1f, 0.2f, 0.6f, 1.0f };
+			for (int i = 0; i < MAX_BACKBUF_COUNT; ++i)
+			{
+				pContext->ClearRenderTargetView(swapchain->get_device()->get_private_data<frame_capture>().dx11Graphics.pTarget[i].Get(),backgroundColor);
+				pContext->ClearDepthStencilView(swapchain->get_device()->get_private_data<frame_capture>().dx11Graphics.pDSV[i].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+			}
+
+			swapchain->get_device()->get_private_data<frame_capture>().dx11Graphics.pSwapChain->Present(1, 0);*/
+		}
+
+		reshade::api::command_list *cmd_list = queue->get_immediate_command_list();
+		const reshade::api::resource back_buffer = swapchain->get_current_back_buffer();
+
+		cmd_list->barrier(back_buffer, reshade::api::resource_usage::present, reshade::api::resource_usage::shader_resource_pixel | reshade::api::resource_usage::shader_resource);
+
+		queue->flush_immediate_command_list();
+
+		//queue->wait_idle();
+
+		//devData.dx11Graphics.on_present(swapChain->get_current_back_buffer_index());
+
+		cmd_list->barrier(back_buffer, reshade::api::resource_usage::shader_resource_pixel | reshade::api::resource_usage::shader_resource, reshade::api::resource_usage::present);
+
+	}
 }
 
 static void on_reshade_finish_effects(reshade::api::effect_runtime *runtime, reshade::api::command_list *, reshade::api::resource_view rtv, reshade::api::resource_view)
@@ -464,10 +592,40 @@ static void on_init_device(reshade::api::device *device)
 
 DWORD WINAPI WindowThreadProc(LPVOID lpParam)
 {
-    HWND  wnd = CreateWindowInDll();
+     CreateWindowInDll();
     //无消息循环时窗口会退出
+
+	 RECT initialRect = { 0, 0, 1024, 768 };
+	 AdjustWindowRectEx(&initialRect, WS_OVERLAPPEDWINDOW, FALSE, WS_EX_OVERLAPPEDWINDOW);
+	 LONG initialWidth = initialRect.right - initialRect.left;
+	 LONG initialHeight = initialRect.bottom - initialRect.top;
+
+	 g_hWnd = CreateWindowExW(WS_EX_OVERLAPPEDWINDOW,
+							 WinClassName,
+							 L"hahah1",
+							 WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+							 CW_USEDEFAULT, CW_USEDEFAULT,
+							 initialWidth,
+							 initialHeight,
+							 0, 0, g_hInstance, 0);
+
+	 if (!g_hWnd) {
+		 MessageBoxA(0, "CreateWindowEx failed", "Fatal Error", MB_OK);
+
+	 }
+	 // show window
+	 if (g_hWnd == nullptr)
+	 {
+		 reshade::log::message(reshade::log::level::error, "Create Chili Window Failed");
+		 // Init ImGui Win32 Impl
+	 }
+	 reshade::log::message(reshade::log::level::error, "Create Chili Window Successed");
+	 ShowWindow(g_hWnd, SW_SHOWNORMAL);//SW_SHOWDEFAULT
+
+	 UpdateWindow(g_hWnd);
+
     MSG msg;
-    while (GetMessage(&msg, wnd, 0, 0))
+    while (GetMessage(&msg, g_hWnd, 0, 0))
     {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
@@ -513,7 +671,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
         reshade::register_event<reshade::addon_event::init_device>(on_init);
 
 
-        // reshade::register_event<reshade::addon_event::present>(&on_present);
+         reshade::register_event<reshade::addon_event::present>(&on_present);
          //reshade::register_event<reshade::addon_event::destroy_effect_runtime>(on_destroy);
          // 注册 create_swapchain 事件回调
          //reshade::register_event<reshade::addon_event::create_swapchain>(&on_create_swapchain);

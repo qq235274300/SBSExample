@@ -26,26 +26,24 @@ public:
 public:
     DX11Graphics() = default;
 
+	//无法使用reshade 拿到的device创建swapChain 故 直接创建device跟swapChian
+	bool CreateDeviceAndSwapChain(HWND hwnd);
+	void CreateSRV_forGameRTV(DXGI_FORMAT currentBackBufferFormat, ID3D11Resource *currentBackBuffer);
+
     void TestCreateSwapChain(HINSTANCE hInstance);
+	
     void Init_Resource(ID3D11Device *pDevice, HWND _hwnd, HINSTANCE hInstance);
 
 
 public:
-
-    // Microsoft::WRL::ComPtr<IDXGIDevice> dxgiDevice;
-   /* Microsoft::WRL::ComPtr<IDXGIAdapter> dxgiAdapter;
-    Microsoft::WRL::ComPtr<IDXGIFactory> dxgiFactory;
-
-    Microsoft::WRL::ComPtr<IDXGIFactory> pFactory;
-    Microsoft::WRL::ComPtr<IDXGISwapChain> pSwapChain;
-    Microsoft::WRL::ComPtr<IDXGISwapChain1> pSwapChain1;*/
-
-    // Microsoft::WRL::ComPtr<ID3D11Device> pGraphicsDevice;
-    Microsoft::WRL::ComPtr<IDXGISwapChain1> pSwapChain1;
-
-    Microsoft::WRL::ComPtr<ID3D11DeviceContext> pContext;
+	
+	Microsoft::WRL::ComPtr<IDXGISwapChain> pSwapChain;
+	Microsoft::WRL::ComPtr<ID3D11Device> pDevice;
+	Microsoft::WRL::ComPtr<ID3D11DeviceContext> pContext;
     Microsoft::WRL::ComPtr<ID3D11RenderTargetView> pTarget;
     Microsoft::WRL::ComPtr<ID3D11DepthStencilView> pDSV;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> pSRV;
+	Microsoft::WRL::ComPtr<ID3D11SamplerState> pSampler;
 
     float angle = 0;
     float x = 0;
