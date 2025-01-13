@@ -23,9 +23,9 @@ using namespace DirectX;
 
 struct ST_VERTEX_QUAD
 {
-	XMFLOAT4 m_v4Position;		//Position
-	XMFLOAT4 m_vClr;		//Color
-	XMFLOAT2 m_vTxc;		//Texcoord
+    XMFLOAT4 m_v4Position;      //Position
+    XMFLOAT4 m_vClr;        //Color
+    XMFLOAT2 m_vTxc;        //Texcoord
 };
 
 
@@ -106,218 +106,266 @@ std::string DX11Graphics::Exception::GetErrorString() const noexcept
 
 bool DX11Graphics::CreateDeviceAndSwapChain(HWND hwnd)
 {
-	Microsoft::WRL::ComPtr<IDXGIFactory1> pFactory;
-	HRESULT hr;
-	hr = CreateDXGIFactory1(IID_PPV_ARGS(pFactory.GetAddressOf()));
-	if (FAILED(hr)) {
-		throw std::runtime_error("IDXGIFactoryクラスの作成に失敗しました。");
-	}
+    Microsoft::WRL::ComPtr<IDXGIFactory1> pFactory;
+    HRESULT hr;
+    hr = CreateDXGIFactory1(IID_PPV_ARGS(pFactory.GetAddressOf()));
+    if (FAILED(hr)) {
+        throw std::runtime_error("IDXGIFactoryクラスの作成に失敗しました。");
+    }
 
-	DXGI_SWAP_CHAIN_DESC swapChainDesc = { 0 };
-	swapChainDesc.OutputWindow = hwnd;
-	swapChainDesc.BufferCount = MAX_BACKBUF_COUNT;
-	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD; //DXGI_SWAP_EFFECT_DISCARD DXGI_SWAP_EFFECT_SEQUENTIAL
+    DXGI_SWAP_CHAIN_DESC swapChainDesc = { 0 };
+    swapChainDesc.OutputWindow = hwnd;
+    swapChainDesc.BufferCount = MAX_BACKBUF_COUNT;
+    swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD; //DXGI_SWAP_EFFECT_DISCARD DXGI_SWAP_EFFECT_SEQUENTIAL
 
-	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;//DXGI_USAGE_BACK_BUFFER DXGI_USAGE_RENDER_TARGET_OUTPUT
-	swapChainDesc.Flags = 0;
-	//swapChainDesc.Flags = 0;
-	swapChainDesc.SampleDesc.Count = 1;
-	swapChainDesc.SampleDesc.Quality = 0;
-	//フルスクリーンとウィンドモードの切り替えがしたい場合は、まずウィンドウモードとして生成することを推奨しているみたい
-	swapChainDesc.Windowed = true;
-	swapChainDesc.BufferDesc.Width = 0;
-	swapChainDesc.BufferDesc.Height = 0;
-	swapChainDesc.BufferDesc.RefreshRate.Numerator = 0;
-	swapChainDesc.BufferDesc.RefreshRate.Denominator = 0;
-	swapChainDesc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-	swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-	swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+    swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;//DXGI_USAGE_BACK_BUFFER DXGI_USAGE_RENDER_TARGET_OUTPUT
+    swapChainDesc.Flags = 0;
+    //swapChainDesc.Flags = 0;
+    swapChainDesc.SampleDesc.Count = 1;
+    swapChainDesc.SampleDesc.Quality = 0;
+    //フルスクリーンとウィンドモードの切り替えがしたい場合は、まずウィンドウモードとして生成することを推奨しているみたい
+    swapChainDesc.Windowed = true;
+    swapChainDesc.BufferDesc.Width = 0;
+    swapChainDesc.BufferDesc.Height = 0;
+    swapChainDesc.BufferDesc.RefreshRate.Numerator = 0;
+    swapChainDesc.BufferDesc.RefreshRate.Denominator = 0;
+    swapChainDesc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+    swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 
 
-	UINT swapCreateFlags = 0u;
+    UINT swapCreateFlags = 0u;
 #ifndef NDEBUG
-	swapCreateFlags |= D3D11_CREATE_DEVICE_DEBUG;
+    swapCreateFlags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
-	D3D11CreateDeviceAndSwapChain(
-		nullptr,
-		D3D_DRIVER_TYPE_HARDWARE,
-		nullptr,
-		swapCreateFlags,
-		nullptr,
-		0,
-		D3D11_SDK_VERSION,
-		&swapChainDesc,
-		&pSwapChain,
-		&pDevice,
-		nullptr,
-		&pContext
-	);
+    D3D11CreateDeviceAndSwapChain(
+        nullptr,
+        D3D_DRIVER_TYPE_HARDWARE,
+        nullptr,
+        swapCreateFlags,
+        nullptr,
+        0,
+        D3D11_SDK_VERSION,
+        &swapChainDesc,
+        &pSwapChain,
+        &pDevice,
+        nullptr,
+        &pContext
+    );
 
 
-	/*hr = pFactory->CreateSwapChain(d3d11Device, &swapChainDesc, &pSwapChain);
-	if (FAILED(hr)) {
-		throw std::runtime_error("IDXGISwapChainの作成に失敗");
-	}*/
+    /*hr = pFactory->CreateSwapChain(d3d11Device, &swapChainDesc, &pSwapChain);
+    if (FAILED(hr)) {
+        throw std::runtime_error("IDXGISwapChainの作成に失敗");
+    }*/
 
-	if (pSwapChain) {
-		reshade::log::message(reshade::log::level::info, ("host_resource_index: 1"));
-	}
-	else {
-		reshade::log::message(reshade::log::level::info, ("host_resource_index: 2"));
-	}
+    if (pSwapChain) {
+        reshade::log::message(reshade::log::level::info, ("host_resource_index: 1"));
+    }
+    else {
+        reshade::log::message(reshade::log::level::info, ("host_resource_index: 2"));
+    }
 
-	// gain access to texture subresource in swap chain(back buffer)
-	wrl::ComPtr<ID3D11Resource> pBackBuffer;
-	pSwapChain->GetBuffer(0, __uuidof(ID3D11Resource), &pBackBuffer);
-	pDevice->CreateRenderTargetView(pBackBuffer.Get(), nullptr, &pTarget);
+    // gain access to texture subresource in swap chain(back buffer)
+    wrl::ComPtr<ID3D11Resource> pBackBuffer;
+    pSwapChain->GetBuffer(0, __uuidof(ID3D11Resource), &pBackBuffer);
+    pDevice->CreateRenderTargetView(pBackBuffer.Get(), nullptr, &pTarget);
 
-	// create depth stensil state
-	D3D11_DEPTH_STENCIL_DESC dsDesc = {};
-	dsDesc.DepthEnable = TRUE;
-	dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-	dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
-	wrl::ComPtr<ID3D11DepthStencilState> pDSState;
-	pDevice->CreateDepthStencilState(&dsDesc, &pDSState);
-	// bind depth state
-	pContext->OMSetDepthStencilState(pDSState.Get(), 1u);
-	// create depth stensil texture
-	wrl::ComPtr<ID3D11Texture2D> pDepthStencil;
-	D3D11_TEXTURE2D_DESC descDepth = {};
-	descDepth.Width = WIDTH;
-	descDepth.Height = HEIGHT;
-	descDepth.MipLevels = 1u;
-	descDepth.ArraySize = 1u;
-	descDepth.Format = DXGI_FORMAT_D32_FLOAT;
-	descDepth.SampleDesc.Count = 1u;
-	descDepth.SampleDesc.Quality = 0u;
-	descDepth.Usage = D3D11_USAGE_DEFAULT;
-	descDepth.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-	pDevice->CreateTexture2D(&descDepth, nullptr, &pDepthStencil);
-	// create view of depth stensil texture
-	D3D11_DEPTH_STENCIL_VIEW_DESC descDSV = {};
-	descDSV.Format = DXGI_FORMAT_D32_FLOAT;
-	descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-	descDSV.Texture2D.MipSlice = 0u;
-	pDevice->CreateDepthStencilView(
-		pDepthStencil.Get(), &descDSV, &pDSV
-	);
-	// bind depth stensil view to OM
-	pContext->OMSetRenderTargets(1u, pTarget.GetAddressOf(), pDSV.Get());
+    // bind depth state
 
-	// configure viewport
-	D3D11_VIEWPORT vp;
-	vp.Width = 2048.0f;
-	vp.Height = 768.0f;
-	vp.MinDepth = 0.0f;
-	vp.MaxDepth = 1.0f;
-	vp.TopLeftX = 0.0f;
-	vp.TopLeftY = 0.0f;
-	pContext->RSSetViewports(1u, &vp);
-	
-	//全屏三角形
+    // create depth stensil texture
+    wrl::ComPtr<ID3D11Texture2D> pDepthStencil;
+    D3D11_TEXTURE2D_DESC descDepth = {};
+    descDepth.Width = WIDTH;
+    descDepth.Height = HEIGHT;
+    descDepth.MipLevels = 1u;
+    descDepth.ArraySize = 1u;
+    descDepth.Format = DXGI_FORMAT_D32_FLOAT;
+    descDepth.SampleDesc.Count = 1u;
+    descDepth.SampleDesc.Quality = 0u;
+    descDepth.Usage = D3D11_USAGE_DEFAULT;
+    descDepth.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+    pDevice->CreateTexture2D(&descDepth, nullptr, &pDepthStencil);
+    // create view of depth stensil texture
+    D3D11_DEPTH_STENCIL_VIEW_DESC descDSV = {};
+    descDSV.Format = DXGI_FORMAT_D32_FLOAT;
+    descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+    descDSV.Texture2D.MipSlice = 0u;
+    pDevice->CreateDepthStencilView(
+        pDepthStencil.Get(), &descDSV, &pDSV
+    );
+    // bind depth stensil view to OM
+    //pContext->OMSetRenderTargets(1u, pTarget.GetAddressOf(), pDSV.Get());
 
 
+    {
+        D3D11_RASTERIZER_DESC rasterizerDesc = {};
+        rasterizerDesc.FillMode = D3D11_FILL_SOLID;
+        rasterizerDesc.CullMode = D3D11_CULL_BACK;
+        rasterizerDesc.FrontCounterClockwise = TRUE;
 
-	ST_VERTEX_QUAD stTriangleVertices[] =
-	{
+        pDevice->CreateRasterizerState(&rasterizerDesc, &rasterizerState);
+    }
 
-		{ { -1.0f, 1.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f },	{ 0.0f, 0.0f }  },
-		{ { 1.0f, 1.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f },	{ 1.0f, 0.0f }  },
-		{ { -1.0f, -1.0f, 0.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f },	{ 0.0f, 1.0f }  },
-		{ { 1.0f, -1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f },	{ 1.0f, 1.0f }  }
+    // create depth stensil state
+    D3D11_DEPTH_STENCIL_DESC dsDesc = {};
+    dsDesc.DepthEnable = TRUE;
+    dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+    dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
+    pDevice->CreateDepthStencilState(&dsDesc, &pDSState);
 
+    //pContext->OMSetDepthStencilState(pDSState.Get(), 1u);
 
-	};
+    // configure viewport
+  /*  D3D11_VIEWPORT vp;
+    vp.Width = 2048.0f;
+    vp.Height = 768.0f;
+    vp.MinDepth = 0.0f;
+    vp.MaxDepth = 1.0f;
+    vp.TopLeftX = 0.0f;
+    vp.TopLeftY = 0.0f;
+    pContext->RSSetViewports(1u, &vp);*/
 
-	
-
-
-	wrl::ComPtr<ID3D11Buffer> pVertexBuffer;
-	D3D11_BUFFER_DESC bd = {};
-	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.CPUAccessFlags = 0u;
-	bd.MiscFlags = 0u;
-	bd.ByteWidth = sizeof(stTriangleVertices);
-	bd.StructureByteStride = sizeof(ST_VERTEX_QUAD);
-	D3D11_SUBRESOURCE_DATA sd = {};
-	sd.pSysMem = stTriangleVertices;
-	pDevice->CreateBuffer(&bd, &sd, &pVertexBuffer);
-	// Bind vertex buffer to pipeline
-	const UINT stride = sizeof(ST_VERTEX_QUAD);
-	const UINT offset = 0u;
-	pContext->IASetVertexBuffers(0u, 1u, pVertexBuffer.GetAddressOf(), &stride, &offset);
-
-	// Create Sampler State
-	D3D11_SAMPLER_DESC samplerDesc = {};
-	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-	pDevice->CreateSamplerState(&samplerDesc, &pSampler);
-	//sample 是否现在绑定？
-	pContext->PSSetSamplers(0, 1, pSampler.GetAddressOf());
+    //全屏三角形
 
 
 
+    ST_VERTEX_QUAD stTriangleVertices[] =
+    {
 
-	// create pixel shader
-	wrl::ComPtr<ID3D11PixelShader> pPixelShader;
-	wrl::ComPtr<ID3DBlob> pBlob;
-
-	hr = D3DCompileFromFile(L"SBSExpand.hlsl", nullptr, nullptr, "PSMain", "ps_5_0", 0, 0, &pBlob, nullptr);
-	hr = pDevice->CreatePixelShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), nullptr, &pPixelShader);
-	pContext->PSSetShader(pPixelShader.Get(), nullptr, 0u);
-
-	// create vertex shader
-	wrl::ComPtr<ID3D11VertexShader> pVertexShader;
-	hr = D3DCompileFromFile(L"SBSExpand.hlsl", nullptr, nullptr, "VSMain", "vs_5_0", 0, 0, &pBlob, nullptr);
-	// 创建顶点着色器
-	hr = pDevice->CreateVertexShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), nullptr, &pVertexShader);
-	pContext->VSSetShader(pVertexShader.Get(), nullptr, 0u);
-
-	// input (vertex) layout (2d position only)
-	wrl::ComPtr<ID3D11InputLayout> pInputLayout;
-	const D3D11_INPUT_ELEMENT_DESC ied[] =
-	{
-		{ "Position",0,DXGI_FORMAT_R32G32B32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0 },
-		{ "COLOR",	  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,		 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 }
-	};
-	pDevice->CreateInputLayout(
-		ied, (UINT)std::size(ied),
-		pBlob->GetBufferPointer(),
-		pBlob->GetBufferSize(),
-		&pInputLayout
-	);
-
-	// bind vertex layout
-	pContext->IASetInputLayout(pInputLayout.Get());
-
-	//bind render target 
-	pContext->OMSetRenderTargets(1u, pTarget.GetAddressOf(), nullptr);
-	 //Set primitive topology to triangle list (groups of 3 vertices)
-	pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	// configure viewport
-	
-
-	//pContext->DrawIndexed((UINT)std::size(indices), 0u, 0u);
+        { { -1.0f, 1.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f },  { 0.0f, 0.0f }  },
+        { { 1.0f, 1.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f },   { 1.0f, 0.0f }  },
+        { { -1.0f, -1.0f, 0.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.0f, 1.0f }  },
+        { { 1.0f, -1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f },  { 1.0f, 1.0f }  }
 
 
-	return true;
+    };
+
+    nQuadVBSize = sizeof(stTriangleVertices);
+
+    D3D11_BUFFER_DESC bd = {};
+    bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    bd.Usage = D3D11_USAGE_DEFAULT;
+    bd.CPUAccessFlags = 0u;
+    bd.MiscFlags = 0u;
+    bd.ByteWidth = sizeof(stTriangleVertices);
+    bd.StructureByteStride = sizeof(ST_VERTEX_QUAD);
+    D3D11_SUBRESOURCE_DATA sd = {};
+    sd.pSysMem = stTriangleVertices;
+    pDevice->CreateBuffer(&bd, &sd, &pVertexBuffer);
+    // Bind vertex buffer to pipeline
+    stride = sizeof(ST_VERTEX_QUAD);
+    offset = 0u;
+    pContext->IASetVertexBuffers(0u, 1u, pVertexBuffer.GetAddressOf(), &stride, &offset);
+
+    // Create Sampler State
+    D3D11_SAMPLER_DESC samplerDesc = {};
+    samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    pDevice->CreateSamplerState(&samplerDesc, &pSampler);
+    //sample 是否现在绑定？
+    pContext->PSSetSamplers(0, 1, pSampler.GetAddressOf());
+
+
+
+    // create pixel shader
+
+    wrl::ComPtr<ID3DBlob> pBlob;
+    hr = D3DCompileFromFile(L"SBSExpand.hlsl", nullptr, nullptr, "PSMain", "ps_5_0", 0, 0, &pBlob, nullptr);
+    hr = pDevice->CreatePixelShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), nullptr, &pPixelShader);
+    pContext->PSSetShader(pPixelShader.Get(), nullptr, 0u);
+
+    // create vertex shader
+    hr = D3DCompileFromFile(L"SBSExpand.hlsl", nullptr, nullptr, "VSMain", "vs_5_0", 0, 0, &pBlob, nullptr);
+    // 创建顶点着色器
+    hr = pDevice->CreateVertexShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), nullptr, &pVertexShader);
+    pContext->VSSetShader(pVertexShader.Get(), nullptr, 0u);
+
+    // input (vertex) layout (2d position only)
+
+    const D3D11_INPUT_ELEMENT_DESC ied[] =
+    {
+        { "Position",0,DXGI_FORMAT_R32G32B32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0 },
+        { "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,       0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+    };
+    pDevice->CreateInputLayout(
+        ied, (UINT)std::size(ied),
+        pBlob->GetBufferPointer(),
+        pBlob->GetBufferSize(),
+        &pInputLayout
+    );
+
+    // bind vertex layout
+    pContext->IASetInputLayout(pInputLayout.Get());
+
+    //bind render target 
+   // pContext->OMSetRenderTargets(1u, pTarget.GetAddressOf(), nullptr);
+    //Set primitive topology to triangle list (groups of 3 vertices)
+    pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    // configure viewport
+
+
+    //pContext->DrawIndexed((UINT)std::size(indices), 0u, 0u);
+
+
+    return true;
 }
 
-void DX11Graphics::CreateSRV_forGameRTV(DXGI_FORMAT currentBackBufferFormat,  ID3D11Resource *currentBackBuffer)
+void DX11Graphics::CreateSRV_forGameRTV(D3D11_TEXTURE2D_DESC backBufferDesc, Microsoft::WRL::ComPtr<ID3D11Texture2D> backBufferTexture, ID3D11Device *device)
 {
-	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Format = currentBackBufferFormat;
-	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MipLevels = 1;
 
-	pDevice->CreateShaderResourceView(currentBackBuffer, &srvDesc, &pSRV);
+    // 创建 Shader Resource View 描述
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    srvDesc.Format = backBufferDesc.Format; // 使用后缓冲的格式
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D; // 设置为二维纹理
+    srvDesc.Texture2D.MostDetailedMip = 0; // 从mipmap级别0开始
+    srvDesc.Texture2D.MipLevels = 1; // 只使用一个mipmap级别
 
+    HRESULT hr;
+    hr = device->CreateShaderResourceView(backBufferTexture.Get(), &srvDesc, &pSRV);
+    assert(SUCCEEDED(hr));
 }
+
+
+void DX11Graphics::On_Present()
+{    // 2. 设置渲染目标
+
+
+    const float color[] = { 0.1f, 0.2f, 0.6f, 1.0f };
+    pContext->ClearRenderTargetView(pTarget.Get(), color);
+    pContext->ClearDepthStencilView(pDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0u);
+
+
+    D3D11_VIEWPORT viewport = { 0.0f, 0.0f, (FLOAT)1024, (FLOAT)768, 0.0f, 1.0f };
+    pContext->RSSetViewports(1, &viewport);
+
+    pContext->RSSetState(rasterizerState.Get());
+    pContext->OMSetDepthStencilState(pDSState.Get(), 1u);
+
+    pContext->OMSetRenderTargets(1u, pTarget.GetAddressOf(), pDSV.Get());
+
+    pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    pContext->IASetInputLayout(pInputLayout.Get());
+
+    pContext->VSSetShader(pVertexShader.Get(), nullptr, 0);
+    pContext->PSSetShader(pPixelShader.Get(), nullptr, 0);
+
+    //关键部分
+    pContext->PSSetShaderResources(0, 1, &pSRV);
+    pContext->PSSetSamplers(0, 1, &pSampler);
+
+    pContext->IASetVertexBuffers(0u, 1u, pVertexBuffer.GetAddressOf(), &stride, &offset);
+    // pContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R16_UINT, 0);
+
+    pContext->Draw((UINT)nQuadVBSize, 0u);
+
+    pSwapChain->Present(1u, 0u);
+}
+
 
 void DX11Graphics::TestCreateSwapChain(HINSTANCE hInstance)
 {
@@ -484,6 +532,7 @@ void DX11Graphics::TestCreateSwapChain(HINSTANCE hInstance)
 
 
 }
+
 
 void DX11Graphics::Init_Resource(ID3D11Device *pDevice, HWND _hwnd, HINSTANCE hInstance)
 {
