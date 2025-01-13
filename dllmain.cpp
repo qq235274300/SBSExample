@@ -13,8 +13,12 @@
 //Render target format, DX and reshade have its own definations
 #define  RTVFormat DXGI_FORMAT_R8G8B8A8_UNORM
 
+
 using namespace reshade;
+
 using namespace reshade::api;
+
+using namespace Microsoft::WRL;
 
 extern bool save_texture_image(const resource_desc &desc, const subresource_data &data);
 
@@ -141,9 +145,66 @@ struct __declspec(uuid("2FA5FB3D-7873-4E67-9DDA-5D449DB2CB47")) frame_capture
 
 DX11Graphics dx11Graphics;
 
+bool InitializeSwapChain(HWND hwnd, ID3D11Device *d3d11Device, int width, int height, ComPtr<IDXGISwapChain1> &swapChain) {
+    // 获取 DXGI 工厂
+
+
+    ComPtr<IDXGIDevice> dxgiDevice;
+    HRESULT hr = d3d11Device->QueryInterface(__uuidof(IDXGIDevice), &dxgiDevice);
+    if (FAILED(hr)) {
+        MessageBox(hwnd, "Failed to get DXGI device!", "Error", MB_OK);
+        return false;
+    }
+
+    ComPtr<IDXGIAdapter> dxgiAdapter;
+    hr = dxgiDevice->GetAdapter(&dxgiAdapter);
+    if (FAILED(hr)) {
+        MessageBox(hwnd, "Failed to get DXGI adapter!", "Error", MB_OK);
+        return false;
+    }
+
+    ComPtr<IDXGIFactory2> dxgiFactory;
+    hr = dxgiAdapter->GetParent(__uuidof(IDXGIFactory2), &dxgiFactory);
+    if (FAILED(hr)) {
+        MessageBox(hwnd, "Failed to get DXGI factory!", "Error", MB_OK);
+        return false;
+    }
+
+    // 配置 SwapChain 描述
+    DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
+    swapChainDesc.Width = width;
+    swapChainDesc.Height = height;
+    swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    swapChainDesc.Stereo = FALSE;
+    swapChainDesc.SampleDesc.Count = 1;
+    swapChainDesc.SampleDesc.Quality = 0;
+    swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapChainDesc.BufferCount = 2;
+    swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
+    swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+    swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
+
+    // 创建 SwapChain
+    hr = dxgiFactory->CreateSwapChainForHwnd(
+        d3d11Device,
+        hwnd,
+        &swapChainDesc,
+        nullptr, // 可选的全屏参数
+        nullptr, // 输出限制参数
+        &swapChain
+    );
+
+    if (FAILED(hr)) {
+        MessageBox(hwnd, "Failed to create SwapChain!", "Error", MB_OK);
+        return false;
+    }
+
+    return true;
+}
+
 
 //static reshade::api::resource host_resource = { 0 };
-frame_capture data;
+
 bool Firston_INIT = true;
 static void on_init(reshade::api::device *device)
 {
@@ -153,7 +214,14 @@ static void on_init(reshade::api::device *device)
         Sleep(10);
     }
     ID3D11Device *d3d11_device = ((ID3D11Device *)re_device->get_native());
-    dx11Graphics.Init_Resource(d3d11_device, g_hWnd, g_hInstance);
+
+    ComPtr<IDXGISwapChain1> swapChain;
+    if (!InitializeSwapChain(g_hWnd, d3d11_device, 800, 600, swapChain)) {
+        MessageBox(nullptr, "Failed to initialize SwapChain!", "Error", MB_OK);
+        return;
+    }
+
+    //dx11Graphics.Init_Resource(d3d11_device, g_hWnd, g_hInstance);
     //if (Firston_INIT)
     //{
     //    Firston_INIT = false;
